@@ -2,6 +2,10 @@
 #define XPLRSS_H
 
 #include <QMainWindow>
+#include <QStandardItemModel>
+#include <QList>
+
+#include "feedtree.h"
 
 namespace Ui {
 class XplRSS;
@@ -17,6 +21,8 @@ public:
     
 private:
     Ui::XplRSS *ui;
+    FeedTree *feedTree;
+    QStandardItemModel *feedList;
 };
 
 #endif // XPLRSS_H
