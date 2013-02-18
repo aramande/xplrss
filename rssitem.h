@@ -2,6 +2,14 @@
 #define RSSITEM_H
 
 #include <QStandardItem>
+#include <QStyledItemDelegate>
+#include <QStyleOptionViewItem>
+#include <QTextDocument>
+#include <QAbstractTextDocumentLayout>
+#include <QModelIndex>
+#include <QListView>
+#include <QPainter>
+#include <QSize>
 
 class RssItem : public QStandardItem
 {
@@ -22,6 +30,8 @@ public:
 	const QString& summary();
 	const QString& author();
 	bool read();
+	//void paint(QObject* parent, QPainter* painter, const QStyleOptionViewItem & option, const QModelIndex &index) const;
+	//QSize sizeHint(QObject* parent, const QStyleOptionViewItem & option, const QModelIndex & index) const;
 };
 
 #endif // RSSITEM_H

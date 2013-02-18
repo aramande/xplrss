@@ -102,3 +102,42 @@ void RssItem::setText(const QString &junk){
 
 	if(junk=="") return; // just to get rid of the annoying warning
 }
+
+/*
+void RssItem::paint(QObject* parent, QPainter* painter, const QStyleOptionViewItem & option, const QModelIndex &index) const
+{
+	//removing unused parameter warning
+	for(;index.isValid();) break;
+
+	//QListView *p = (QListView*)parent;
+	QStyleOptionViewItemV4 options = option;
+
+	painter->save();
+	QTextDocument doc;
+	doc.setHtml(options.text);
+	doc.setTextWidth(option.rect.size().width());
+	QAbstractTextDocumentLayout::PaintContext context;
+	painter->translate(option.rect.x(), option.rect.y());
+	doc.documentLayout()->draw(painter, context);
+	painter->restore();
+}
+
+QSize RssItem::sizeHint(QObject* parent, const QStyleOptionViewItem & option, const QModelIndex & index) const
+{
+	//removing unused parameter warning
+	for(;index.isValid();) break;
+
+	QListView *p = (QListView*)parent;
+	QFontMetrics fm(p->font());
+	QStyleOptionViewItemV4 options = option;
+	float rw = float(p->viewport()->size().width());
+	float tw = fm.width(options.text);
+	float ratio = tw/rw;
+	int lines = 0;
+	if(ratio - int(ratio) < 0.1f)
+		 lines = int(ratio);
+	else
+		 lines = int(ratio) + 1;
+	return QSize(rw,lines*fm.height());
+}
+*/

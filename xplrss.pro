@@ -18,18 +18,14 @@ SOURCES += main.cpp\
     htmldelegate.cpp \
     rssmodel.cpp \
     rssitem.cpp \
-    multidelegate/sectionitem.cpp \
-    multidelegate/listwidgetitemdelegate.cpp \
-    multidelegate/headeritem.cpp
+    util.cpp
 
 HEADERS  += xplrss.h \
     feedtree.h \
     htmldelegate.h \
     rssmodel.h \
     rssitem.h \
-    multidelegate/listwidgetitemdelegate.h \
-    multidelegate/headeritem.h \
-    multidelegate/sectionitem.h
+    util.h
 
 FORMS    += xplrss.ui
 

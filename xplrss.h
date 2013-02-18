@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QStandardItemModel>
 #include <QList>
+#include <QTimer>
 
 #include "feedtree.h"
 
@@ -22,7 +23,11 @@ public:
 private:
     Ui::XplRSS *ui;
     FeedTree *feedTree;
-    QStandardItemModel *feedList;
+	 QStandardItemModel *feedList;
+	 QTimer* timer;
+
+public slots:
+	 void scrollFix();
 };
 
 #endif // XPLRSS_H

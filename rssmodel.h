@@ -2,7 +2,7 @@
 #define RSSMODEL_H
 
 #include <QStandardItemModel>
-#include <QHttp>
+#include <QNetworkAccessManager>
 #include <QtXml>
 #include <QtCore>
 #include "rssitem.h"
@@ -18,7 +18,7 @@ public:
 
 private:
 	int connectionId;
-	QHttp http;
+	QNetworkAccessManager http;
 	QXmlStreamReader xml;
 	QString _filename, _id, _title, _subtitle, _rssLink, _link, _updated;
 	RssItem *_selectedItem;
@@ -31,14 +31,10 @@ private:
 	void parseRss2();
 	void parseAtom();
 signals:
-	
+	void loaded();
 public slots:
 	void pressed(const QModelIndex &index);
-	void responseHeaderReceived(const QHttpResponseHeader &header);
-	void requestFinished(int id, bool error);
+	void requestFinished(QNetworkReply *reply);
 };
-
-uint hash(const char *str);
-const char* c_str(QString str1);
 
 #endif // RSSMODEL_H

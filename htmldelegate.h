@@ -9,9 +9,12 @@
 #include <QPainter>
 #include <QSize>
 
+#include "util.h"
+
 class HTMLDelegate : public QStyledItemDelegate
 {
 	Q_OBJECT
+private:
 public:
 	explicit HTMLDelegate(QObject *parent = 0);
 protected:

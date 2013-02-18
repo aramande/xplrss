@@ -1,49 +1,48 @@
 #include "htmldelegate.h"
+#include <QAbstractItemView>
+#include <QDebug>
+#include <QListView>
 
-HTMLDelegate::HTMLDelegate(QObject *parent) : QStyledItemDelegate(parent){
-
-
-}
+HTMLDelegate::HTMLDelegate(QObject *parent) : QStyledItemDelegate(parent){}
 
 void HTMLDelegate::paint(QPainter* painter, const QStyleOptionViewItem & option, const QModelIndex &index) const
 {
 	QStyleOptionViewItemV4 options = option;
 	initStyleOption(&options, index);
 
-	painter->save();
-
 	QTextDocument doc;
+	QAbstractTextDocumentLayout::PaintContext context;
+	QRect rect(option.rect.topLeft(), option.rect.bottomRight());
+
+	// Draw background color
+	painter->save();
+	painter->setBrush(QColor("#F5F5FC"));
+	painter->drawRect(rect);
+	painter->restore();
+
+	// Write HTML parsed Text
+	painter->save();
 	doc.setHtml(options.text);
+	doc.setPageSize(rect.size());
+	painter->translate(rect.x(), rect.y());
+	doc.documentLayout()->draw(painter, context);
+	painter->restore();
 
-	options.text = "";
-	options.widget->style()->drawControl(QStyle::CE_ItemViewItem, &options, painter);
-
-	// shift text right to make icon visible
-	QSize iconSize = options.icon.actualSize(options.rect.size());
-	painter->translate(options.rect.left()+iconSize.width(), options.rect.top());
-	QRect clip(0, 0, options.rect.width()+iconSize.width(), options.rect.height());
-
-	//doc.drawContents(painter, clip);
-
-	painter->setClipRect(clip);
-	QAbstractTextDocumentLayout::PaintContext ctx;
-	// set text color to red for selected item
-	//if (option.state & QStyle::State_Selected){
-	ctx.palette.setColor(QPalette::Base, QColor("red"));
-	//}
-	ctx.clip = clip;
-	doc.documentLayout()->draw(painter, ctx);
-
+	// Draw divider line
+	painter->save();
+	painter->setPen(QPen(Qt::darkBlue, 3));
+	painter->drawLine(rect.bottomLeft(), rect.bottomRight());
 	painter->restore();
 }
 
 QSize HTMLDelegate::sizeHint ( const QStyleOptionViewItem & option, const QModelIndex & index ) const
 {
-	 QStyleOptionViewItemV4 options = option;
-	 initStyleOption(&options, index);
+	QStyleOptionViewItemV4 options = option;
+	initStyleOption(&options, index);
+	QTextDocument doc;
+	QRect rect(option.rect.topLeft(), option.rect.bottomRight());
 
-	 QTextDocument doc;
-	 doc.setHtml(options.text);
-	 doc.setTextWidth(options.rect.width());
-	 return QSize(doc.idealWidth(), doc.size().height());
+	doc.setHtml(options.text);
+	doc.setTextWidth(rect.width());
+	return QSize(rect.width(), doc.size().height());
 }

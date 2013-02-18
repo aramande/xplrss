@@ -2,10 +2,13 @@
 #include "rssitem.h"
 #include <QDebug>
 #include <QApplication>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 #include <QList>
 #include <QUrl>
 #include <QFile>
 #include <time.h>
+#include "util.h"
 
 //RssModel::RssModel(QObject *parent) : QStandardItemModel(parent){}
 
@@ -82,13 +85,10 @@ void RssModel::saveFile(){
 }
 
 void RssModel::loadUrl(const QString &urlstring){
-	connect(&http, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)), this,
-			  SLOT(responseHeaderReceived(const QHttpResponseHeader &)));
-	connect(&http, SIGNAL(requestFinished(int,bool)), this,
-			  SLOT(requestFinished(int, bool)));
+	connect(&http, SIGNAL(finished(QNetworkReply*)),
+		this, SLOT(requestFinished(QNetworkReply*)));
 	QUrl url(urlstring);
-	http.setHost(url.host());
-	connectionId = http.get(url.path());
+	http.get(QNetworkRequest(url));
 }
 
 void RssModel::loadFile(){
@@ -123,27 +123,16 @@ void RssModel::pressed(const QModelIndex &index){
 	qDebug() << index << mouse;
 }
 
-void RssModel::responseHeaderReceived(const QHttpResponseHeader &header){
-	if (header.statusCode() != 200){
-		qDebug() << "HTTP Error: " << header.statusCode();
-		http.abort();
-	}
-}
-
-void RssModel::requestFinished(int id, bool error){
-	if(error){
-		qDebug() << id << ": Error with the request.";
-	}
-
-	QByteArray page = http.readAll();
-	if(page.length() == 0 ){
+void RssModel::requestFinished(QNetworkReply *reply){
+	if(reply->size() == 0 ){
 		qDebug() << "Content empty";
 		return;
 	}
 	//qDebug() << page << " #" << id << " len=" << page.length();
-	xml.addData(page);
+	xml.addData(reply->readAll());
 	parseXml();
 	saveFile();
+	emit(loaded());
 }
 
 void RssModel::parseXml(){
@@ -163,7 +152,7 @@ void RssModel::parseXml(){
 	}
 	if (xml.error() && xml.error() != QXmlStreamReader::PrematureEndOfDocumentError) {
 		qWarning() << "XML ERROR:" << xml.lineNumber() << ": " << xml.errorString();
-		http.abort();
+		http.deleteLater();
 	}
 }
 
@@ -249,7 +238,7 @@ void RssModel::parseRss2(){
 	}
 	if (xml.error() && xml.error() != QXmlStreamReader::PrematureEndOfDocumentError) {
 		qWarning() << "XML ERROR:" << xml.lineNumber() << ": " << xml.errorString();
-		http.abort();
+		http.deleteLater();
 	}
 }
 
@@ -300,19 +289,6 @@ void RssModel::parseAtom(){
 	}
 	if (xml.error() && xml.error() != QXmlStreamReader::PrematureEndOfDocumentError) {
 		qWarning() << "XML ERROR:" << xml.lineNumber() << ": " << xml.errorString();
-		http.abort();
+		http.deleteLater();
 	}
-}
-
-uint hash(const char *str){
-	 uint h = 0;
-	 while (*str)
-		 h = h << 1 ^ *str++;
-	 return h;
-}
-
-const char* c_str(QString str1){
-	QByteArray ba = str1.toLatin1();
-	const char* c_str2 = ba.data();
-	return c_str2;
 }
