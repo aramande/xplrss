@@ -20,6 +20,7 @@ private:
 signals:
 
 public slots:
+	void pressed(QModelIndex);
 	void update();
 };
 

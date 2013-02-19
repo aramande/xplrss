@@ -1,5 +1,7 @@
 #include "feedtree.h"
 #include <QDebug>
+#include <QApplication>
+
 
 FeedTree::FeedTree(const QString &filename, QObject *parent) : QStandardItemModel(parent)
 {
@@ -40,6 +42,13 @@ void FeedTree::read(){
 
 	delete[] value;
 	file.close();
+}
+
+void FeedTree::pressed(QModelIndex index){
+	if(!index.isValid()) return;
+	Qt::MouseButtons mouse = QApplication::mouseButtons();
+	QStandardItem* item = itemFromIndex(index);
+	qDebug() << index << mouse;
 }
 
 void FeedTree::update(){

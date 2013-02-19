@@ -128,7 +128,6 @@ void RssModel::requestFinished(QNetworkReply *reply){
 		qDebug() << "Content empty";
 		return;
 	}
-	//qDebug() << page << " #" << id << " len=" << page.length();
 	xml.addData(reply->readAll());
 	parseXml();
 	saveFile();

@@ -7,6 +7,7 @@
 #include <QTimer>
 
 #include "feedtree.h"
+#include "rssmodel.h"
 
 namespace Ui {
 class XplRSS;
@@ -23,11 +24,18 @@ public:
 private:
     Ui::XplRSS *ui;
     FeedTree *feedTree;
-	 QStandardItemModel *feedList;
+	 RssModel *feedList;
 	 QTimer* timer;
 
+	 void resizeEvent(QResizeEvent * event);
+
 public slots:
+	 void delay();
 	 void scrollFix();
+	private slots:
+	 void on_actionAdd_Feed_triggered();
+	 void on_actionOptions_triggered();
+	 void on_actionAbout_triggered();
 };
 
 #endif // XPLRSS_H
