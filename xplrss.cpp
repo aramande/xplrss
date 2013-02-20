@@ -1,10 +1,10 @@
 #include "xplrss.h"
 #include "ui_xplrss.h"
 #include "htmldelegate.h"
+#include "addfeedwidget.h"
 #include "rssmodel.h"
 #include <QScrollBar>
 #include <QListView>
-#include <QDir>
 
 XplRSS::XplRSS(QWidget *parent) :
 	QMainWindow(parent),
@@ -87,8 +87,8 @@ void XplRSS::scrollFix(){
 
 void XplRSS::on_actionAdd_Feed_triggered()
 {
-	QMessageBox::information(this, "Adding feed", "Adding feed options go here! Yay!");
-	// TODO: To be implemented
+	// QMessageBox::information(this, "Adding feed", "Adding feed options go here! Yay!");
+	addFeedWidget = new AddFeedWidget();
 }
 
 void XplRSS::on_actionOptions_triggered()

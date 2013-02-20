@@ -25,7 +25,8 @@ private:
     Ui::XplRSS *ui;
     FeedTree *feedTree;
 	 RssModel *feedList;
-	 QTimer* timer;
+	 QWidget *addFeedWidget;
+	 QTimer *timer;
 
 	 void resizeEvent(QResizeEvent * event);
 

@@ -18,14 +18,16 @@ SOURCES += main.cpp\
     htmldelegate.cpp \
     rssmodel.cpp \
     rssitem.cpp \
-    util.cpp
+    util.cpp \
+    addfeedwidget.cpp
 
 HEADERS  += xplrss.h \
     feedtree.h \
     htmldelegate.h \
     rssmodel.h \
     rssitem.h \
-    util.h
+    util.h \
+    addfeedwidget.h
 
 FORMS    += xplrss.ui
 
