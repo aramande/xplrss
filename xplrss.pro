@@ -32,7 +32,8 @@ HEADERS  += xplrss.h \
 FORMS    += xplrss.ui
 
 OTHER_FILES += \
-    tree.txt
+    tree.txt \
+    README.txt
 
 RESOURCES += \
     res.qrc
