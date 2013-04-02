@@ -19,7 +19,10 @@ SOURCES += main.cpp\
     rssmodel.cpp \
     rssitem.cpp \
     util.cpp \
-    addfeedwidget.cpp
+    addfeedwidget.cpp \
+    feed.cpp \
+    branch.cpp \
+    feedtreeview.cpp
 
 HEADERS  += xplrss.h \
     feedtree.h \
@@ -27,7 +30,10 @@ HEADERS  += xplrss.h \
     rssmodel.h \
     rssitem.h \
     util.h \
-    addfeedwidget.h
+    addfeedwidget.h \
+    feed.h \
+    branch.h \
+    feedtreeview.h
 
 FORMS    += xplrss.ui
 

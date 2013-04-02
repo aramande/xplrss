@@ -17,11 +17,12 @@ QString wordWrap(const QString &str, int wrapLength, int &countLine)
 	return tempStr;
 }
 
-uint hash(const char *str){
-	 uint h = 0;
-	 while (*str)
-		 h = h << 1 ^ *str++;
-	 return h;
+qulonglong hash(const char *str, unsigned long long salt){
+	const unsigned long long mulp = 2654435789;
+	salt ^= 104395301;
+	while (*str)
+		 salt += (*str++ * mulp) ^ (salt >> 23);
+	return salt;
 }
 
 const char* c_str(QString str1){

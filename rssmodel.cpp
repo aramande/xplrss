@@ -8,17 +8,57 @@
 #include <QUrl>
 #include <QFile>
 #include <time.h>
+#include <QDataStream>
 #include "util.h"
 
 //RssModel::RssModel(QObject *parent) : QStandardItemModel(parent){}
 
-RssModel::RssModel(const QString &url, QObject *parent) : QStandardItemModel(parent){
+RssModel::RssModel(const QString &url, QStringList readItems, QWidget *parent) : QStandardItemModel(){
 	QUrl temp(url);
-	_filename = QString("%1/.xplrss/cache/%2%3").arg(QDir::homePath(), QString::number(hash(c_str(temp.path()))), temp.host());
-
-	//loadFile();
-	loadUrl(url); //will save result to file
+	_parent = dynamic_cast<XplRSS*>(parent);
+	_filename = QString("%1/.xplrss/cache/%2%3.xml").arg(QDir::homePath(), temp.host(), temp.path().split(QRegExp("[^a-z0-9]")).join(""));
+	_rssLink = url;
+	qRegisterMetaTypeStreamOperators<RssModel*>("RssModel*");
+	loadFile();
+	loadUrl(url);
 	_selectedItem = NULL;
+}
+
+RssModel::RssModel(const RssModel& original) : QStandardItemModel(original.parent()){
+	_rssLink = original.rssLink();
+	_readItems = QLinkedList<QString>(original._readItems);
+	QUrl temp(_rssLink);
+	_filename = QString("%1/.xplrss/cache/%2%3.xml").arg(QDir::homePath(), temp.host(), temp.path().split(QRegExp("[^a-z0-9]")).join(""));
+	loadUrl(_rssLink);
+	_selectedItem = NULL;
+}
+
+RssModel::~RssModel(){
+
+}
+
+void RssModel::addRef(){
+	++_ref;
+}
+
+void RssModel::delRef(){
+	--_ref;
+}
+
+QDataStream &operator<<(QDataStream &out, RssModel * const &rhs) {
+	out.writeRawData(reinterpret_cast<const char*>(&rhs), sizeof(rhs));
+	return out;
+}
+
+QDataStream &operator>>(QDataStream &in, RssModel *&rhs) {
+	in.readRawData(reinterpret_cast<char*>(&rhs), sizeof(rhs));
+	return in;
+}
+
+QMimeData* RssModel::mimeData(const QList<QStandardItem *> items ) const
+{
+	Q_UNUSED(items)
+	return new QMimeData();
 }
 
 void RssModel::saveFile(){
@@ -33,6 +73,7 @@ void RssModel::saveFile(){
 	qDebug() << _filename << _title << _link;
 	if(file.open(QFile::WriteOnly | QFile::Text)){
 		QXmlStreamWriter out(&file);
+		out.setAutoFormatting(true);
 		out.writeStartDocument();
 		{
 			out.writeStartElement("feed");
@@ -46,13 +87,14 @@ void RssModel::saveFile(){
 			out.writeEndElement();
 
 			out.writeTextElement("link", _link);
-			if(_id != "")
-				out.writeTextElement("id", _id); //TODO: not implemented
+			if(_guid != "")
+				out.writeTextElement("id", _guid); //TODO: not implemented
 			else
 				out.writeTextElement("id", _link);
 
 			out.writeTextElement("updated", _updated); //TODO: be formatted
 
+			qDebug() << "I have " << rowCount() << " rows.";
 			for(int i; i<rowCount(); ++i){
 				RssItem *it = static_cast<RssItem*>(item(i));
 				out.writeStartElement("entry");
@@ -62,10 +104,10 @@ void RssModel::saveFile(){
 				out.writeAttribute("href", it->itemLink());
 				out.writeEndElement();
 				out.writeTextElement("id", it->id());
-				out.writeTextElement("updated", it->date()); //TODO: be formatted
+				out.writeTextElement("updated", it->date().toString("yyyy-MM-ddThh:mm:ssZ"));
 				if(it->summary() != "")
 					out.writeTextElement("summary", it->summary());
-				if(it->summary() != "")
+				if(it->content() != "")
 					out.writeTextElement("content", it->content());
 
 				out.writeStartElement("author");
@@ -96,28 +138,32 @@ void RssModel::loadFile(){
 	if(file.open(QFile::ReadOnly | QFile::Text)){
 		xml.addData(file.readAll());
 		parseXml();
-		//qDebug() << file.readAll();
 		file.close();
+		xml.clear();
 	}
 }
 
 void RssModel::markRead(const QModelIndex &index){
-	RssItem* item = static_cast<RssItem*>(this->itemFromIndex(index));
+	QStandardItemModel* model = dynamic_cast<QStandardItemModel*>(_parent->feedListView()->model());
+	RssItem* item = static_cast<RssItem*>(model->takeItem(index.row()));
 	item->setRead(true);
 }
 
 void RssModel::pressed(const QModelIndex &index){
 	if(!index.isValid()) return;
 	Qt::MouseButtons mouse = QApplication::mouseButtons();
-	RssItem* item = static_cast<RssItem*>(itemFromIndex(index));
-	if((mouse & Qt::LeftButton) == Qt::LeftButton){
+	QStandardItemModel* model = dynamic_cast<QStandardItemModel*>(_parent->feedListView()->model());
+	RssItem* item = static_cast<RssItem*>(model->itemFromIndex(index));
+	if(item && (mouse & Qt::LeftButton) == Qt::LeftButton){
 		if(_selectedItem != NULL){
 			_selectedItem->setHidden(true);
 			_selectedItem->setExpanded(false);
+			_selectedItem->setText();
 		}
 		item->setRead(true);
 		item->setExpanded(true);
 		item->setHidden(false);
+		item->setText();
 		_selectedItem = item;
 	}
 	qDebug() << index << mouse;
@@ -130,8 +176,9 @@ void RssModel::requestFinished(QNetworkReply *reply){
 	}
 	xml.addData(reply->readAll());
 	parseXml();
-	saveFile();
 	emit(loaded());
+	saveFile();
+	xml.clear();
 }
 
 void RssModel::parseXml(){
@@ -153,20 +200,21 @@ void RssModel::parseXml(){
 		qWarning() << "XML ERROR:" << xml.lineNumber() << ": " << xml.errorString();
 		http.deleteLater();
 	}
+	emit parsed(_title);
 }
 
-// Returns 1 if copy rssitem is found, 2 if a copy with a different date was found, and 0 otherwise.
-int RssModel::filter(QString id, QString date){
+// Returns 0 if newer or equal copy rssitem is found, row number + 2 if a copy with submitted date being newer was found, and 1 if no previous copy was found.
+int RssModel::filter(QString idStr, QDateTime date){
 	for(int i=0; i<rowCount(); ++i){
 		RssItem *temp = static_cast<RssItem*>(item(i));
-		if(temp->id() == id){
-			if(temp->date() != date){
-				return 2;
+		if(temp->id() == idStr){
+			if(temp->date() < date){
+				return temp->row()+2;
 			}
-			return 1;
+			return 0;
 		}
 	}
-	return 0;
+	return 1;
 }
 
 void RssModel::parseRss2(){
@@ -195,24 +243,23 @@ void RssModel::parseRss2(){
 			 currentTag = xml.name().toString();
 		} else if (xml.isEndElement()) {
 			if (xml.name() == "item" && link != "") {
-				if(!filter(id, date)){
-					//struct tm tm;
-					//time_t t;
-					//strptime(c_str(date), "%d %b %Y %H:%M:%S", &tm) == NULL
-					QString tz = date.split(' ')[5];
-					QString hour;
-					hour = QString("%1%2").arg(QString(tz[1]),QString(tz[2]));
-					int offset = hour.toInt();
-					if(tz[0] == '-') offset *= -1;
+				QString tz = date.split(' ')[5];
+				QString hour;
+				hour = QString("%1%2").arg(QString(tz[1]),QString(tz[2]));
+				int offset = hour.toInt();
+				if(tz[0] == '-') offset *= -1;
 
-					date.chop(date.length()-date.lastIndexOf(' '));
-					QDateTime timestamp = QDateTime::fromString(date, "ddd, dd MMM yyyy hh:mm:ss");
-					timestamp.setTimeSpec(Qt::UTC);
-					timestamp = timestamp.toLocalTime();
-					timestamp.addSecs(offset * 3600);
-					qDebug() << "Date: " << timestamp.toString() << " tz" << offset;
-					RssItem *item = new RssItem(title, date, content, "", "author", link, false, id);
-					appendRow(item);
+				date.chop(date.length()-date.lastIndexOf(' '));
+				QDateTime timestamp = QDateTime::fromString(date, "ddd, dd MMM yyyy hh:mm:ss");
+				timestamp.setTimeSpec(Qt::UTC);
+				timestamp = timestamp.toLocalTime();
+				timestamp = timestamp.addSecs(offset * -3600);
+				qDebug() << "Date: " << timestamp.toString() << " tz" << offset;
+				int res = filter(id, timestamp);
+				if(res){
+					if(res != 1) removeRow(res-2);
+					qDebug() << QString::number(hash(c_str(id)), 16);
+					appendRow(new RssItem(title, timestamp, content, "", "", link, false, id));
 				}
 
 				title.clear();
@@ -242,48 +289,73 @@ void RssModel::parseRss2(){
 }
 
 void RssModel::parseAtom(){
-	throw QString("To be implemented");
-
 	QString currentTag;
-	QString linkString;
-	QString contentString;
-	QString titleString;
-	QString dateString;
+	QString content;
+	QString summary;
+	QString author;
+	QString title;
+	QString date;
+	QString link;
+	QString id;
 
 	while (!xml.atEnd()) {
 		xml.readNext();
 		if (xml.isStartElement()) {
-			if(xml.name() == "item"){
-				if (titleString!="" && _title == "" && _link == ""){
-					_title = titleString;
-					_link = linkString;
+			if(xml.name() == "entry"){
+				if (title!="" && _title == "" && _link == ""){
+					_title = title;
+					_link = link;
 				}
-				linkString.clear();
-				titleString.clear();
-				dateString.clear();
+				content.clear();
+				summary.clear();
+				author.clear();
+				title.clear();
+				date.clear();
+				link.clear();
+				id.clear();
 			 }
-
-			 currentTag = xml.name().toString();
+			currentTag = xml.name().toString();
+			if (currentTag == "link"){
+				if (xml.attributes().hasAttribute("rel") && xml.attributes().value("rel") == "self")
+					link += xml.text().toString();
+				else if (xml.attributes().hasAttribute("href"))
+					link += xml.attributes().value("href");
+			 }
 		} else if (xml.isEndElement()) {
-			if (xml.name() == "item" && linkString != "") {
-				RssItem *item = new RssItem(titleString, dateString, contentString, "summary", "author", linkString, false, "");
-				appendRow(item);
+			if (xml.name() == "entry" && link != "") {
+				QDateTime timestamp = QDateTime::fromString(date, "yyyy-MM-ddThh:mm:ssZ");
+				if(timestamp.toString() == "") timestamp = QDateTime::fromString(date, "yyyy-MM-ddThh:mm:ss.zzzZ");
+				int res = filter(id, timestamp);
+				if(res){
+					if(res != 1) removeRow(res-2);
+					bool read = false;
+					if(_readItems.contains(QString::number(hash(c_str(id)), 16)))
+						read = true;
+					appendRow(new RssItem(title, timestamp, content, summary, author, link, read, id));
+				}
 
-				titleString.clear();
-				linkString.clear();
-				dateString.clear();
-				contentString.clear();
+				content.clear();
+				summary.clear();
+				author.clear();
+				title.clear();
+				date.clear();
+				link.clear();
+				id.clear();
 			}
 
 		} else if (xml.isCharacters() && !xml.isWhitespace()) {
 			 if (currentTag == "title")
-				  titleString += xml.text().toString();
-			 else if (currentTag == "link")
-				  linkString += xml.text().toString();
-			 else if (currentTag == "pubDate")
-				  dateString += xml.text().toString();
-			 else if (currentTag == "description")
-				  contentString += xml.text().toString();
+				  title += xml.text().toString();
+			 else if (currentTag == "updated")
+				  date += xml.text().toString();
+			 else if (currentTag == "id")
+				  id += xml.text().toString();
+			 else if (currentTag == "content")
+				  content += xml.text().toString();
+			 else if (currentTag == "summary")
+				 summary += xml.text().toString();
+			 else if (currentTag == "name")
+				 author += xml.text().toString();
 		}
 	}
 	if (xml.error() && xml.error() != QXmlStreamReader::PrematureEndOfDocumentError) {

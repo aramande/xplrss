@@ -1,7 +1,7 @@
 #include "rssitem.h"
 #include <cstdio>
 #include <QDebug>
-RssItem::RssItem(const QString &title, const QString &date, const QString &content, const QString &summary, const QString &author, const QString &itemLink, bool read, const QString &id) : QStandardItem()
+RssItem::RssItem(const QString &title, const QDateTime &date, const QString &content, const QString &summary, const QString &author, const QString &itemLink, bool read, const QString &id) : QStandardItem()
 {
 	_read = read;
 	_hidden = read;
@@ -12,47 +12,17 @@ RssItem::RssItem(const QString &title, const QString &date, const QString &conte
 	setText(title,date,content,summary,author,itemLink);
 }
 
-const QString& RssItem::id(){
-	return _id;
-}
-const QString& RssItem::date(){
-	return _date;
-}
-const QString& RssItem::title(){
-	return _title;
-}
-const QString& RssItem::content(){
-	return _content;
-}
-const QString& RssItem::itemLink(){
-	return _itemLink;
-}
-const QString& RssItem::summary(){
-	return _summary;
-}
-const QString& RssItem::author(){
-	return _author;
-}
-bool RssItem::read(){
-	return _read;
-}
-
 void RssItem::setRead(bool value){
 	_read = value;
-	setText();
 }
-
 void RssItem::setHidden(bool value){
 	_hidden = value;
-	setText();
 }
-
 void RssItem::setExpanded(bool value){
 	_expanded = value;
-	setText();
 }
 
-void RssItem::setText(const QString &title, const QString &date, const QString &content, const QString &summary, const QString &author, const QString itemLink){
+void RssItem::setText(const QString &title, const QDateTime &date, const QString &content, const QString &summary, const QString &author, const QString itemLink){
 	_title = title;
 	_date = date;
 	_content = content;
@@ -75,32 +45,32 @@ void RssItem::setText(const QString &title, const QString &date, const QString &
 	QString text = "No Data";
 	if(_hidden){
 		if(_read)
-			text = QString ("<font size='4'>%1</font> (%2)").arg(_title, _date);
+			text = QString ("<font size='4'>%1</font> (%2)").arg(_title, _date.toString());
 		else
-			text = QString ("<font size='4'><strong>%1</strong></font> (%2)").arg(_title, _date);
+			text = QString ("<font size='4'><strong>%1</strong></font> (%2)").arg(_title, _date.toString());
 	}
 	else if(!_expanded){
 		if(_read)
-			text = QString ("<font size='4'>%1</font> (%2)<p>%3 ...</p>").arg(_title, _date, _summary);
+			text = QString ("<font size='4'>%1</font> (%2)<p>%3 ...</p>").arg(_title, _date.toString(), _summary);
 		else
-			text = QString ("<font size='4'><strong>%1</strong></font> (%2)<p>%3 ...</p>").arg(_title, _date, _summary);
+			text = QString ("<font size='4'><strong>%1</strong></font> (%2)<p>%3 ...</p>").arg(_title, _date.toString(), _summary);
 	}
 	else{
 		if(_read)
-			text = QString ("<font size='4'>%1</font> (%2)<p>%3</p>").arg(_title, _date, _content);
+			text = QString ("<font size='4'>%1</font> (%2)<p>%3</p>").arg(_title, _date.toString(), _content);
 		else
-			text = QString ("<font size='4'><strong>%1</strong></font> (%2)<p>%3</p>").arg(_title, _date, _content);
+			text = QString ("<font size='4'><strong>%1</strong></font> (%2)<p>%3</p>").arg(_title, _date.toString(), _content);
 	}
 
 	QStandardItem::setText(text);
+
 }
 
 // Updates the text without setting any new values.
 // Used for updating the read state
 void RssItem::setText(const QString &junk){
+	Q_UNUSED(junk)
 	setText(_title, _date, _content, _summary, _author, _itemLink);
-
-	if(junk=="") return; // just to get rid of the annoying warning
 }
 
 /*

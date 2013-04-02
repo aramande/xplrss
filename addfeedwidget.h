@@ -21,9 +21,9 @@ class AddFeedWidget : public QWidget
 		explicit AddFeedWidget(QWidget *parent = 0);
 	private:
 		QRadioButton *feedSelect;
-		QRadioButton *folderSelect;
+		QRadioButton *branchSelect;
 		QLineEdit *inputField;
-
+		QWidget *_parent;
 	signals:
 		
 	public slots:

@@ -3,63 +3,59 @@
 #include "htmldelegate.h"
 #include "addfeedwidget.h"
 #include "rssmodel.h"
+#include "branch.h"
 #include <QScrollBar>
 #include <QListView>
+#include <string>
+
 
 XplRSS::XplRSS(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::XplRSS)
 {
+	feedTreeView = new FeedTreeView(this);
+	_feedListView = new QListView(this);
 	ui->setupUi(this);
+	ui->splitter->addWidget(feedTreeView);
+	ui->splitter->addWidget(_feedListView);
 	ui->splitter->setSizes(QList<int>() << 200 << 390);
-
-	//delete ui->listView;
-	//ui->listView = new ListView();
-	QString feedTreeFile = QString("%1/.xplrss/feedtree.cfg").arg(QDir::homePath());
-	QFile testFile(feedTreeFile);
-	if(!testFile.exists()){
-		qDebug() <<	"Can't read feedtree file, generating it.";
-		QDir dir;
-		if(!dir.exists(QDir::homePath() + "/.xplrss")){
-			 dir.mkdir(QDir::homePath() + "/.xplrss");
-		}
-		testFile.open(QFile::WriteOnly | QFile::Text);
-		testFile.write("Default\n");
-		testFile.flush();
-		testFile.close();
+	_feedTreeFile = QString("%1/.xplrss/feedtree.cfg").arg(QDir::homePath());
+	QFile file(_feedTreeFile);
+	qDebug() << _feedTreeFile << file.exists();
+	if(file.exists()){
+		qDebug() << "Loading feedtree...";
+		feedTree = new FeedTree(_feedTreeFile, this);
 	}
-
-	feedTree = new FeedTree(feedTreeFile);
-	feedList = new RssModel("http://davidr64.tumblr.com/rss"); // TODO: make dynamic later
-	HTMLDelegate* delegate = new HTMLDelegate(ui->listView);
-
+	else{
+		feedTree = new FeedTree(this);
+	}
+	feedList = new RssModel("http://davidr64.tumblr.com/rss", QStringList(), this); // TODO: make dynamic later
+	HTMLDelegate* delegate = new HTMLDelegate(_feedListView);
 	QString css = "QListView { background: darkblue; }";
 
-	ui->treeView->setModel(feedTree);
-	ui->treeView->setHeaderHidden(true);
-	ui->treeView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	feedTreeView->setModel(feedTree);
 
-	ui->listView->setModel(feedList);
-	ui->listView->setItemDelegate(delegate);
-	ui->listView->setResizeMode(QListView::Adjust);
-	ui->listView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+	_feedListView->setModel(feedList);
+	_feedListView->setItemDelegate(delegate);
+	_feedListView->setResizeMode(QListView::Adjust);
+	_feedListView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-	ui->listView->setWordWrap(true);
-	ui->listView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-	ui->listView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-	ui->listView->setSelectionMode(QAbstractItemView::NoSelection);
+	_feedListView->setWordWrap(true);
+	_feedListView->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+	_feedListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+	_feedListView->setSelectionMode(QAbstractItemView::NoSelection);
 	setStyleSheet(css);
 
 	//Mouselistener connectors
-	connect(ui->listView, SIGNAL(pressed(QModelIndex)), feedList, SLOT(pressed(QModelIndex)));
-	connect(ui->treeView, SIGNAL(pressed(QModelIndex)), feedTree, SLOT(pressed(QModelIndex)));
+	connect(_feedListView, SIGNAL(pressed(QModelIndex)), feedList, SLOT(pressed(QModelIndex)));
+	connect(feedTreeView, SIGNAL(pressed(QModelIndex)), feedTree, SLOT(pressed(QModelIndex)));
 
 	//Timer for the delay of scrollbug
 	timer = new QTimer(this);
 	timer->setSingleShot(true);
 
 	//Scrollbug connectors
-	connect(ui->listView, SIGNAL(clicked(QModelIndex)), this, SLOT(delay()));
+	connect(_feedListView, SIGNAL(clicked(QModelIndex)), this, SLOT(delay()));
 	connect(feedList, SIGNAL(loaded()), this, SLOT(delay()));
 	connect(timer, SIGNAL(timeout()), this, SLOT(scrollFix()));
 }
@@ -67,6 +63,8 @@ XplRSS::XplRSS(QWidget *parent) :
 XplRSS::~XplRSS()
 {
 	delete ui;
+	//delete feedListView;
+	//delete feedTreeView;
 }
 
 void XplRSS::resizeEvent(QResizeEvent * event){
@@ -81,14 +79,58 @@ void XplRSS::delay(){
 
 //Fixes the scrollbug
 void XplRSS::scrollFix(){
-	//qDebug() << "Hello?";
-	ui->listView->verticalScrollBar()->setSingleStep(25);
+	_feedListView->verticalScrollBar()->setSingleStep(25);
+}
+
+void XplRSS::addToFeedTree(QStandardItem* item){
+	feedTree->appendRow(item);
+	if(addFeedWidget != NULL){
+		delete addFeedWidget;
+		addFeedWidget = NULL;
+	}
+	saveFeedTree();
+}
+
+void XplRSS::saveFeedTree(){
+	// TODO: Call this when stuff has been moved
+	QFile file(_feedTreeFile);
+	QDir dir;
+	if(!dir.exists(QDir::homePath() + "/.xplrss")){
+		 dir.mkdir(QDir::homePath() + "/.xplrss");
+	}
+	file.open(QFile::WriteOnly | QFile::Text);
+	for(int i=0; i<feedTree->rowCount(); i++){
+		recSaveFeedTree(feedTree->item(i), 0, file);
+	}
+	file.flush();
+	file.close();
+	qDebug() << "INFO: Feedtree was saved to file";
+}
+
+void XplRSS::recSaveFeedTree(QStandardItem* item, int level, QFile& file){
+		for(int k=0; k<level; k++){
+			file.write(">");
+		}
+		QString line = item->data(SaveRole).toString();
+		qDebug() << line;
+		file.write(c_str(line));
+		file.write("\n");
+
+		if(item->hasChildren()){
+			for(int i=0; i<item->rowCount(); i++){
+				recSaveFeedTree(item->child(i), level+1, file);
+			}
+		}
+}
+
+void XplRSS::loadFeed(RssModel *rssData){
+	feedList = rssData;
+	_feedListView->setModel(rssData);
 }
 
 void XplRSS::on_actionAdd_Feed_triggered()
 {
-	// QMessageBox::information(this, "Adding feed", "Adding feed options go here! Yay!");
-	addFeedWidget = new AddFeedWidget();
+	addFeedWidget = new AddFeedWidget(this);
 }
 
 void XplRSS::on_actionOptions_triggered()
