@@ -11,6 +11,7 @@
 #include "xplrss.h"
 
 class XplRSS;
+class RssItem;
 
 class RssModel : public QStandardItemModel
 {

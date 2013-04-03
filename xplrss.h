@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QStandardItemModel>
+#include <QListView>
 #include <QList>
 #include <QTimer>
 

@@ -126,6 +126,8 @@ void XplRSS::recSaveFeedTree(QStandardItem* item, int level, QFile& file){
 void XplRSS::loadFeed(RssModel *rssData){
 	feedList = rssData;
 	_feedListView->setModel(rssData);
+	_feedListView->scrollToTop();
+	delay();
 }
 
 void XplRSS::on_actionAdd_Feed_triggered()
