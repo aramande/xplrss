@@ -10,9 +10,9 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = xplrss
 TEMPLATE = app
+QMAKE_CXXFLAGS += -std=c++0x
 
-
-SOURCES += main.cpp\
+SOURCES += main.cpp \
         xplrss.cpp \
     feedtree.cpp \
     htmldelegate.cpp \
@@ -22,7 +22,8 @@ SOURCES += main.cpp\
     addfeedwidget.cpp \
     feed.cpp \
     branch.cpp \
-    feedtreeview.cpp
+    feedtreeview.cpp \
+    compoundmodel.cpp
 
 HEADERS  += xplrss.h \
     feedtree.h \
@@ -33,13 +34,11 @@ HEADERS  += xplrss.h \
     addfeedwidget.h \
     feed.h \
     branch.h \
-    feedtreeview.h
+    feedtreeview.h \
+    compoundmodel.h
 
-FORMS    += xplrss.ui
+FORMS += xplrss.ui
 
 OTHER_FILES += \
     tree.txt \
     README.md
-
-RESOURCES += \
-    res.qrc

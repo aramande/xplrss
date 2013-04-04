@@ -37,8 +37,18 @@
     <property name="title">
      <string>Tools</string>
     </property>
+    <widget class="QMenu" name="menuSort_Date">
+     <property name="title">
+      <string>Sort</string>
+     </property>
+     <addaction name="actionDate_Ascending"/>
+     <addaction name="actionDate_Descending"/>
+     <addaction name="actionRead_Ascending"/>
+     <addaction name="actionRead_Descending"/>
+    </widget>
     <addaction name="actionAdd_Feed"/>
     <addaction name="actionOptions"/>
+    <addaction name="menuSort_Date"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -71,6 +81,43 @@
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionSort_ID">
+   <property name="text">
+    <string>Sort ID</string>
+   </property>
+  </action>
+  <action name="actionDate_Ascending">
+   <property name="text">
+    <string>Date Ascending</string>
+   </property>
+   <property name="toolTip">
+    <string>Sort by Date Ascending</string>
+   </property>
+  </action>
+  <action name="actionDate_Descending">
+   <property name="text">
+    <string>Date Descending</string>
+   </property>
+   <property name="toolTip">
+    <string>Sort by Date Descending</string>
+   </property>
+  </action>
+  <action name="actionRead_Ascending">
+   <property name="text">
+    <string>Read Ascending</string>
+   </property>
+   <property name="toolTip">
+    <string>Sort by Read Ascending</string>
+   </property>
+  </action>
+  <action name="actionRead_Descending">
+   <property name="text">
+    <string>Read Descending</string>
+   </property>
+   <property name="toolTip">
+    <string>Sort by Read Descending</string>
    </property>
   </action>
  </widget>

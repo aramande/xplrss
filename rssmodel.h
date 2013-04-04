@@ -13,14 +13,15 @@
 class XplRSS;
 class RssItem;
 
-class RssModel : public QStandardItemModel
+class RssModel : public QStandardItemModel, public Iterable<RssItem*>
 {
 	Q_OBJECT
 public:
 	//RssModel(QObject* parent = NULL);
-		explicit RssModel(const QString &url, QStringList readItems = QStringList(), QWidget* parent = NULL);
+	explicit RssModel(const QString &url, QStringList readItems = QStringList(), QWidget* parent = NULL);
+	RssModel(QWidget *parent = 0);
 	RssModel(const RssModel& original);
-	~RssModel();
+	virtual ~RssModel();
 	void markRead(const QModelIndex &index);
 	void operator>>(QDataStream& source);
 	QDataStream& operator<<(QDataStream& source);
@@ -28,6 +29,10 @@ public:
 
 	void addRef();
 	void delRef();
+	RssItem* get(int) const;
+	Iter<RssItem*> begin() const;
+	Iter<RssItem*> end() const;
+	virtual void loadUrl(const QString &urlstring = "");
 
 private:
 	int connectionId;
@@ -40,13 +45,12 @@ private:
 	XplRSS *_parent;
 
 	void saveFile();
-	void loadUrl(const QString &urlstring);
 	void loadFile();
 	int filter(QString idStr, QDateTime date);
 	void parseXml();
 	void parseRss2();
 	void parseAtom();
-
+protected:
 public:
 	ATTR_ACCESSOR(QString, title)
 	ATTR_READER(QString, rssLink)

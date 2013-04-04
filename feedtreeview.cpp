@@ -46,11 +46,8 @@ void FeedTreeView::dropEvent(QDropEvent *event){
 			else{
 				target->appendRow(new Branch(source->data(SaveRole).toString()));
 			}
-			//event->accept();
+			event->accept();
 			qDebug() << "Moving" << source->data(SaveRole).toString() << "to" << target->data(SaveRole).toString();
-//			QStandardItem* parent = source->parent();
-//			parent->removeRow(source->row());
-//			_mainWin->saveFeedTree();
 		}
 	}
 	else{

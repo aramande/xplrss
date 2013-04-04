@@ -74,7 +74,6 @@ void FeedTree::pressed(QModelIndex index){
 	if(item->data(RssRole).isValid()){ // If has feed
 		_parent->loadFeed(item->data(RssRole).value<RssModel*>());
 	}
-
 }
 
 void FeedTree::update(){

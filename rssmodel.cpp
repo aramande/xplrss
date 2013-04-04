@@ -24,6 +24,10 @@ RssModel::RssModel(const QString &url, QStringList readItems, QWidget *parent) :
 	_selectedItem = NULL;
 }
 
+RssModel::RssModel(QWidget *parent) : QStandardItemModel(parent){
+
+}
+
 RssModel::RssModel(const RssModel& original) : QStandardItemModel(original.parent()){
 	_rssLink = original.rssLink();
 	_readItems = QLinkedList<QString>(original._readItems);
@@ -31,6 +35,7 @@ RssModel::RssModel(const RssModel& original) : QStandardItemModel(original.paren
 	_filename = QString("%1/.xplrss/cache/%2%3.xml").arg(QDir::homePath(), temp.host(), temp.path().split(QRegExp("[^a-z0-9]")).join(""));
 	loadUrl(_rssLink);
 	_selectedItem = NULL;
+
 }
 
 RssModel::~RssModel(){
@@ -53,6 +58,17 @@ QDataStream &operator<<(QDataStream &out, RssModel * const &rhs) {
 QDataStream &operator>>(QDataStream &in, RssModel *&rhs) {
 	in.readRawData(reinterpret_cast<char*>(&rhs), sizeof(rhs));
 	return in;
+}
+
+
+RssItem* RssModel::get(int id) const{
+	return dynamic_cast<RssItem*>(item(id));
+}
+Iter<RssItem*> RssModel::begin() const{
+	return Iter<RssItem*>(this, 0);
+}
+Iter<RssItem*> RssModel::end() const{
+	return Iter<RssItem*>(this, rowCount());
 }
 
 QMimeData* RssModel::mimeData(const QList<QStandardItem *> items ) const
@@ -104,7 +120,7 @@ void RssModel::saveFile(){
 				out.writeAttribute("href", it->itemLink());
 				out.writeEndElement();
 				out.writeTextElement("id", it->id());
-				out.writeTextElement("updated", it->date().toString("yyyy-MM-ddThh:mm:ssZ"));
+				out.writeTextElement("updated", it->data(DateRole).toDateTime().toString("yyyy-MM-ddThh:mm:ssZ"));
 				if(it->summary() != "")
 					out.writeTextElement("summary", it->summary());
 				if(it->content() != "")
@@ -129,7 +145,9 @@ void RssModel::saveFile(){
 void RssModel::loadUrl(const QString &urlstring){
 	connect(&http, SIGNAL(finished(QNetworkReply*)),
 		this, SLOT(requestFinished(QNetworkReply*)));
-	QUrl url(urlstring);
+	QUrl url;
+	if(urlstring == "") url = _rssLink;
+	else url = urlstring;
 	http.get(QNetworkRequest(url));
 }
 
@@ -151,10 +169,10 @@ void RssModel::markRead(const QModelIndex &index){
 
 void RssModel::pressed(const QModelIndex &index){
 	if(!index.isValid()) return;
-	Qt::MouseButtons mouse = QApplication::mouseButtons();
-	QStandardItemModel* model = dynamic_cast<QStandardItemModel*>(_parent->feedListView()->model());
-	RssItem* item = static_cast<RssItem*>(model->itemFromIndex(index));
-	if(item && (mouse & Qt::LeftButton) == Qt::LeftButton){
+	auto mouse = QApplication::mouseButtons();
+	auto model = dynamic_cast<QSortFilterProxyModel*>(_parent->feedListView()->model());
+	auto item = static_cast<RssItem*>(dynamic_cast<QStandardItemModel*>(model->sourceModel())->itemFromIndex(model->mapToSource(index)));
+	if(item && mouse & Qt::LeftButton){
 		if(_selectedItem != NULL){
 			_selectedItem->setHidden(true);
 			_selectedItem->setExpanded(false);
@@ -208,7 +226,7 @@ int RssModel::filter(QString idStr, QDateTime date){
 	for(int i=0; i<rowCount(); ++i){
 		RssItem *temp = static_cast<RssItem*>(item(i));
 		if(temp->id() == idStr){
-			if(temp->date() < date){
+			if(temp->data(DateRole).toDateTime() < date){
 				return temp->row()+2;
 			}
 			return 0;

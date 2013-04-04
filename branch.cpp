@@ -1,10 +1,19 @@
 #include "branch.h"
 #include "util.h"
+#include "compoundmodel.h"
 #include <QDebug>
 
 Branch::Branch(const QString &label) : QStandardItem(label)
 {
 	setData(QVariant(label),SaveRole);
+	setData(QVariant::fromValue(new CompoundModel(this)), RssRole);
+}
+
+Branch::~Branch(){
+	RssModel* rssData = data(RssRole).value<RssModel*>();
+	rssData->delRef();
+	if(!rssData->ref()) delete rssData;
+	data(RssRole).fromValue(NULL);
 }
 
 void Branch::setText(const QString &text){

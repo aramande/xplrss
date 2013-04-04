@@ -32,10 +32,13 @@ XplRSS::XplRSS(QWidget *parent) :
 	feedList = new RssModel("http://davidr64.tumblr.com/rss", QStringList(), this); // TODO: make dynamic later
 	HTMLDelegate* delegate = new HTMLDelegate(_feedListView);
 	QString css = "QListView { background: darkblue; }";
+	_sorter = new QSortFilterProxyModel();
 
 	feedTreeView->setModel(feedTree);
 
-	_feedListView->setModel(feedList);
+	_sorter->setSourceModel(feedList);
+	_feedListView->setModel(_sorter);
+
 	_feedListView->setItemDelegate(delegate);
 	_feedListView->setResizeMode(QListView::Adjust);
 	_feedListView->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -68,8 +71,13 @@ XplRSS::~XplRSS()
 }
 
 void XplRSS::resizeEvent(QResizeEvent * event){
+	Q_UNUSED(event)
 	delay();
-	if(event) return;
+}
+
+void XplRSS::closeEvent(QCloseEvent *event){
+	Q_UNUSED(event)
+	saveFeedTree();
 }
 
 //This is a delay before the scrollfix
@@ -105,6 +113,7 @@ void XplRSS::saveFeedTree(){
 	file.flush();
 	file.close();
 	qDebug() << "INFO: Feedtree was saved to file";
+//#endif
 }
 
 void XplRSS::recSaveFeedTree(QStandardItem* item, int level, QFile& file){
@@ -125,7 +134,8 @@ void XplRSS::recSaveFeedTree(QStandardItem* item, int level, QFile& file){
 
 void XplRSS::loadFeed(RssModel *rssData){
 	feedList = rssData;
-	_feedListView->setModel(rssData);
+	//_feedListView->setModel(rssData);
+	_sorter->setSourceModel(rssData);
 	_feedListView->scrollToTop();
 	delay();
 }
@@ -147,4 +157,24 @@ void XplRSS::on_actionAbout_triggered()
 							"Any bugs are merely features that are yet to be implemented, please be patient.</p>");
 	about.setTextFormat(Qt::RichText);
 	about.exec();
+}
+
+void XplRSS::on_actionDate_Ascending_triggered(){
+	 _sorter->setSortRole(DateRole);
+	 _sorter->sort(0);
+}
+void XplRSS::on_actionDate_Descending_triggered(){
+	_sorter->setSortRole(DateRole);
+	_sorter->sort(0, Qt::DescendingOrder);
+}
+void XplRSS::on_actionRead_Ascending_triggered(){
+	_sorter->setSortRole(ReadRole);
+	_sorter->sort(0);
+}
+void XplRSS::on_actionRead_Descending_triggered(){
+	_sorter->setSortRole(ReadRole);
+	_sorter->sort(0, Qt::DescendingOrder);
+}
+void XplRSS::on_actionQuit(){
+	saveFeedTree();
 }
