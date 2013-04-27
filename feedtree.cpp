@@ -1,5 +1,6 @@
 #include "feedtree.h"
 #include "rssmodel.h"
+#include "feedlistitemmodel.h"
 #include <QDebug>
 #include <QApplication>
 
@@ -38,9 +39,9 @@ void FeedTree::read(){
 				last.pop();
 			}
 		}
-
 		QStandardItem *item = toFeed(QString(pointer));
 		if(!item) item = toBranch(QString(pointer));
+		if(!item) continue; // Empty row
 
 		last.top()->appendRow(item);
 		last.push(item);
@@ -64,6 +65,7 @@ Feed* FeedTree::toFeed(const QString &line){
 
 //Returns a branch, always run after to feed if feed returns null
 Branch* FeedTree::toBranch(const QString &line){
+	if(line.length() == 0) return NULL;
 	return new Branch(line);
 }
 
@@ -71,8 +73,11 @@ void FeedTree::pressed(QModelIndex index){
 	if(!index.isValid()) return;
 	Qt::MouseButtons mouse = QApplication::mouseButtons(); // TODO: account for which button is used
 	QStandardItem* item = itemFromIndex(index);
-	if(item->data(RssRole).isValid()){ // If has feed
-		_parent->loadFeed(item->data(RssRole).value<RssModel*>());
+	if(item->data(RssRole).isValid()){
+		if(item->data(RssRole).canConvert<FeedListItemModel*>()){ // If has feed
+			qDebug() << "RssModel here";
+			_parent->loadFeed(item->data(RssRole).value<FeedListItemModel*>());
+		}
 	}
 }
 

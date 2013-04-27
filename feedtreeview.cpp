@@ -40,11 +40,12 @@ void FeedTreeView::dropEvent(QDropEvent *event){
 	QStandardItem *target = m->itemFromIndex(indexAt(event->pos()));
 	if(target){
 		if(event->dropAction() & Qt::MoveAction){
-			if(source->data(RssRole).isValid()){
+			if(source->data(UrlRole).isValid()){
 				target->appendRow(new Feed(*dynamic_cast<Feed*>(source)));
 			}
 			else{
-				target->appendRow(new Branch(source->data(SaveRole).toString()));
+				target->appendRow(new Branch(*dynamic_cast<Branch*>(source)));
+
 			}
 			event->accept();
 			qDebug() << "Moving" << source->data(SaveRole).toString() << "to" << target->data(SaveRole).toString();

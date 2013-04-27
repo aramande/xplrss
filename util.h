@@ -2,10 +2,13 @@
 #define UTIL_H
 
 #include <QString>
+#include <exception>
 
 #define ATTR_READER(type,variable) inline type variable () const {return _##variable ; }
 #define ATTR_WRITER(type,variable) inline void variable (type variable){ _##variable = variable ; }
 #define ATTR_ACCESSOR(type,variable) ATTR_READER(type,variable) ATTR_WRITER(type,variable)
+
+#define THROW(message) throw Exception(message, __FILE__, __LINE__);
 
 template <typename T> class Iter;
 template <typename T> class LinkedIter;
@@ -62,6 +65,17 @@ class Iter
 	private:
 		int _pos;
 		const Iterable<T> *_p_vec;
+};
+
+class Exception : public std::exception{
+	const char* _message;
+public:
+	Exception (const char* message, const char* file, int line) noexcept;
+	Exception (const QString& message, const char* file, int line) noexcept;
+	Exception (const std::exception&) noexcept;
+	Exception& operator= (const std::exception&) noexcept;
+	~Exception ();
+	virtual const char* what() const noexcept;
 };
 
 #endif // UTIL_H

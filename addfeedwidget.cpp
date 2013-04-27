@@ -4,7 +4,7 @@
 #include "branch.h"
 
 AddFeedWidget::AddFeedWidget(QWidget *parent) :
-	QWidget(NULL)
+	QDialog(NULL)
 {
 	_parent = parent;
 	QVBoxLayout *layout = new QVBoxLayout(this);
@@ -15,6 +15,7 @@ AddFeedWidget::AddFeedWidget(QWidget *parent) :
 	inputField = new QLineEdit("");
 	QPushButton *add = new QPushButton("Add");
 
+	setWindowTitle("Add Feed or Branch");
 	layout->addSpacerItem(new QSpacerItem(0,0));
 	buttonLayout->addWidget(feedSelect);
 	buttonLayout->addWidget(branchSelect);
@@ -30,6 +31,7 @@ AddFeedWidget::AddFeedWidget(QWidget *parent) :
 
 	setLayout(layout);
 
+	setAttribute(Qt::WA_X11NetWmWindowTypeDialog);
 	show();
 }
 

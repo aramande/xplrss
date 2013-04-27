@@ -7,6 +7,7 @@ class Branch : public QStandardItem
 {
 	public:
 		explicit Branch(const QString &label);
+		explicit Branch(const Branch &other);
 		~Branch();
 		void setText(const QString &text);
 		void setData(const QVariant &value, int role);

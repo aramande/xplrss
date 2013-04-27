@@ -1,23 +1,35 @@
 #include "branch.h"
 #include "util.h"
-#include "compoundmodel.h"
+#include "feed.h"
+//#include "compoundmodel.h"
 #include <QDebug>
 
 Branch::Branch(const QString &label) : QStandardItem(label)
 {
 	setData(QVariant(label),SaveRole);
-	setData(QVariant::fromValue(new CompoundModel(this)), RssRole);
+	setData(QVariant::fromValue(new FeedListItemModel(this)), RssRole);
+}
+
+Branch::Branch(const Branch &other) : QStandardItem(other.data(SaveRole).toString()){
+	setData(other.data(SaveRole),TextRole);
+	//setData(other.data(RssRole),RssRole);
+	//data(RssRole).value<RssModel*>()->addRef();
+
+	for(int i=0; i<other.rowCount(); ++i){
+		if(other.data(UrlRole).isValid())
+			appendRow(new Feed(*dynamic_cast<Feed*>(other.child(i))));
+		else
+			appendRow(new Branch(*dynamic_cast<Branch*>(other.child(i))));
+	}
 }
 
 Branch::~Branch(){
-	RssModel* rssData = data(RssRole).value<RssModel*>();
-	rssData->delRef();
-	if(!rssData->ref()) delete rssData;
+	FeedListItemModel* rssData = data(RssRole).value<FeedListItemModel*>();
+	delete rssData;
 	data(RssRole).fromValue(NULL);
 }
 
 void Branch::setText(const QString &text){
-	qDebug() << text << "this?";
 	QString str;
 	str.append(text);
 	str.remove(",");

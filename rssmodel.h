@@ -13,7 +13,7 @@
 class XplRSS;
 class RssItem;
 
-class RssModel : public QStandardItemModel, public Iterable<RssItem*>
+class RssModel : public QStandardItemModel
 {
 	Q_OBJECT
 public:
@@ -23,8 +23,8 @@ public:
 	RssModel(const RssModel& original);
 	virtual ~RssModel();
 	void markRead(const QModelIndex &index);
-	void operator>>(QDataStream& source);
-	QDataStream& operator<<(QDataStream& source);
+	//void operator>>(QDataStream& source);
+	//QDataStream& operator<<(QDataStream& source);
 	QMimeData* mimeData( const QList<QStandardItem *> items ) const;
 
 	void addRef();
@@ -56,7 +56,7 @@ public:
 	ATTR_READER(QString, rssLink)
 	ATTR_READER(int, ref)
 signals:
-	void loaded();
+	void loaded(QStandardItemModel*);
 	void parsed(QString);
 public slots:
 	void pressed(const QModelIndex &index);

@@ -8,6 +8,8 @@
 #include <QTimer>
 #include <QList>
 
+#include "feedlistitemmodel.h"
+#include "feedlistview.h"
 #include "feedtreeview.h"
 #include "feedtree.h"
 #include "rssmodel.h"
@@ -18,6 +20,7 @@
 namespace Ui {
 class XplRSS;
 }
+class FeedListItemModel;
 class FeedTreeView;
 class FeedTree;
 class RssModel;
@@ -30,7 +33,7 @@ public:
 	~XplRSS();
 	void addToFeedTree(QStandardItem *item);
 	void saveFeedTree();
-	void loadFeed(RssModel *rssData);
+	void loadFeed(FeedListItemModel *rssData);
     
 private:
 	Ui::XplRSS *ui;
@@ -38,7 +41,7 @@ private:
 	QListView *_feedListView;
 	QSortFilterProxyModel *_sorter;
 	FeedTree *feedTree;
-	RssModel *feedList;
+	FeedListItemModel *feedList;
 	QWidget *addFeedWidget;
 	QTimer *timer;
 	QString _feedTreeFile;
@@ -60,7 +63,7 @@ private slots:
 	void on_actionDate_Descending_triggered();
 	void on_actionRead_Ascending_triggered();
 	void on_actionRead_Descending_triggered();
-	void on_actionQuit();
+	void on_actionQuit_triggered();
 };
 
 #endif // XPLRSS_H

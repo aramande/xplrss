@@ -22,10 +22,12 @@ RssModel::RssModel(const QString &url, QStringList readItems, QWidget *parent) :
 	loadFile();
 	loadUrl(url);
 	_selectedItem = NULL;
+	_ref = 1;
 }
 
 RssModel::RssModel(QWidget *parent) : QStandardItemModel(parent){
-
+	_ref = 1;
+	_selectedItem = NULL;
 }
 
 RssModel::RssModel(const RssModel& original) : QStandardItemModel(original.parent()){
@@ -35,7 +37,7 @@ RssModel::RssModel(const RssModel& original) : QStandardItemModel(original.paren
 	_filename = QString("%1/.xplrss/cache/%2%3.xml").arg(QDir::homePath(), temp.host(), temp.path().split(QRegExp("[^a-z0-9]")).join(""));
 	loadUrl(_rssLink);
 	_selectedItem = NULL;
-
+	_ref = 1;
 }
 
 RssModel::~RssModel(){
@@ -60,16 +62,6 @@ QDataStream &operator>>(QDataStream &in, RssModel *&rhs) {
 	return in;
 }
 
-
-RssItem* RssModel::get(int id) const{
-	return dynamic_cast<RssItem*>(item(id));
-}
-Iter<RssItem*> RssModel::begin() const{
-	return Iter<RssItem*>(this, 0);
-}
-Iter<RssItem*> RssModel::end() const{
-	return Iter<RssItem*>(this, rowCount());
-}
 
 QMimeData* RssModel::mimeData(const QList<QStandardItem *> items ) const
 {
@@ -194,7 +186,7 @@ void RssModel::requestFinished(QNetworkReply *reply){
 	}
 	xml.addData(reply->readAll());
 	parseXml();
-	emit(loaded());
+	emit(loaded(this));
 	saveFile();
 	xml.clear();
 }

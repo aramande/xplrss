@@ -23,7 +23,11 @@ SOURCES += main.cpp \
     feed.cpp \
     branch.cpp \
     feedtreeview.cpp \
-    compoundmodel.cpp
+    feedlistview.cpp \
+    sorter.cpp \
+    #compoundmodelscrapped.cpp
+    mergedmodel.cpp \
+    feedlistitemmodel.cpp
 
 HEADERS  += xplrss.h \
     feedtree.h \
@@ -35,7 +39,11 @@ HEADERS  += xplrss.h \
     feed.h \
     branch.h \
     feedtreeview.h \
-    compoundmodel.h
+    feedlistview.h \
+    sorter.h \
+    feedlistitemmodel.h \
+    #compoundmodelscrapped.h
+    mergedmodel.h
 
 FORMS += xplrss.ui
 

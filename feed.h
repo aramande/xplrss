@@ -31,9 +31,10 @@ class Feed : public QStandardItem
 		~Feed();
 		void setText(const QString &text);
 		void setData(const QVariant &value, int role);
+		QVariant data(int role) const;
 	private:
 		QWidget* _parent;
-		RssModel* rssData;
+		//RssModel* rssData;
 		FeedUtil* feedUtil;
 	public:
 		ATTR_READER(QWidget*, parent)

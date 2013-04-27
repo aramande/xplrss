@@ -4,6 +4,7 @@
 #include <QtCore>
 #include <QtGui>
 #include <QWidget>
+#include <QDialog>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QRadioButton>
@@ -14,7 +15,7 @@
 #include <QLineEdit>
 #include <QDir>
 
-class AddFeedWidget : public QWidget
+class AddFeedWidget : public QDialog
 {
 		Q_OBJECT
 	public:

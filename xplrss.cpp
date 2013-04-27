@@ -2,6 +2,7 @@
 #include "ui_xplrss.h"
 #include "htmldelegate.h"
 #include "addfeedwidget.h"
+#include "sorter.h"
 #include "rssmodel.h"
 #include "branch.h"
 #include <QScrollBar>
@@ -13,8 +14,9 @@ XplRSS::XplRSS(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::XplRSS)
 {
+	setWindowTitle("XplRSS");
 	feedTreeView = new FeedTreeView(this);
-	_feedListView = new QListView(this);
+	_feedListView = new FeedListView(this);
 	ui->setupUi(this);
 	ui->splitter->addWidget(feedTreeView);
 	ui->splitter->addWidget(_feedListView);
@@ -29,10 +31,10 @@ XplRSS::XplRSS(QWidget *parent) :
 	else{
 		feedTree = new FeedTree(this);
 	}
-	feedList = new RssModel("http://davidr64.tumblr.com/rss", QStringList(), this); // TODO: make dynamic later
+	feedList = new FeedListItemModel(new RssModel("http://davidr64.tumblr.com/rss", QStringList(), this)); // TODO: make dynamic later
 	HTMLDelegate* delegate = new HTMLDelegate(_feedListView);
 	QString css = "QListView { background: darkblue; }";
-	_sorter = new QSortFilterProxyModel();
+	_sorter = new Sorter();
 
 	feedTreeView->setModel(feedTree);
 
@@ -49,6 +51,11 @@ XplRSS::XplRSS(QWidget *parent) :
 	_feedListView->setSelectionMode(QAbstractItemView::NoSelection);
 	setStyleSheet(css);
 
+
+	for(int i=0; i<feedTree->rowCount(); ++i){
+		feedTree->item(i)->data(RssRole).value<FeedListItemModel*>()->loadUrl();
+	}
+
 	//Mouselistener connectors
 	connect(_feedListView, SIGNAL(pressed(QModelIndex)), feedList, SLOT(pressed(QModelIndex)));
 	connect(feedTreeView, SIGNAL(pressed(QModelIndex)), feedTree, SLOT(pressed(QModelIndex)));
@@ -59,7 +66,7 @@ XplRSS::XplRSS(QWidget *parent) :
 
 	//Scrollbug connectors
 	connect(_feedListView, SIGNAL(clicked(QModelIndex)), this, SLOT(delay()));
-	connect(feedList, SIGNAL(loaded()), this, SLOT(delay()));
+	connect(feedList, SIGNAL(loaded(QStandardItemModel*)), this, SLOT(delay()));
 	connect(timer, SIGNAL(timeout()), this, SLOT(scrollFix()));
 }
 
@@ -132,7 +139,7 @@ void XplRSS::recSaveFeedTree(QStandardItem* item, int level, QFile& file){
 		}
 }
 
-void XplRSS::loadFeed(RssModel *rssData){
+void XplRSS::loadFeed(FeedListItemModel *rssData){
 	feedList = rssData;
 	//_feedListView->setModel(rssData);
 	_sorter->setSourceModel(rssData);
@@ -175,6 +182,9 @@ void XplRSS::on_actionRead_Descending_triggered(){
 	_sorter->setSortRole(ReadRole);
 	_sorter->sort(0, Qt::DescendingOrder);
 }
-void XplRSS::on_actionQuit(){
-	saveFeedTree();
+void XplRSS::on_actionQuit_triggered()
+{
+	 saveFeedTree();
+	 this->destroy();
+	 qApp->quit();
 }
