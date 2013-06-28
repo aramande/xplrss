@@ -31,7 +31,8 @@ XplRSS::XplRSS(QWidget *parent) :
 	else{
 		feedTree = new FeedTree(this);
 	}
-	feedList = new FeedListItemModel(new RssModel("http://davidr64.tumblr.com/rss", QStringList(), this)); // TODO: make dynamic later
+	feedList = new FeedListItemModel(new RssModel("http://davidr64.tumblr.com/rss", QSet<QString>(), this)); // TODO: make dynamic later
+	//feedList = new FeedListItemModel();
 	HTMLDelegate* delegate = new HTMLDelegate(_feedListView);
 	QString css = "QListView { background: darkblue; }";
 	_sorter = new Sorter();
@@ -58,6 +59,7 @@ XplRSS::XplRSS(QWidget *parent) :
 
 	//Mouselistener connectors
 	connect(_feedListView, SIGNAL(pressed(QModelIndex)), feedList, SLOT(pressed(QModelIndex)));
+	connect(_feedListView, SIGNAL(clicked(QModelIndex)), feedList, SLOT(clicked(QModelIndex)));
 	connect(feedTreeView, SIGNAL(pressed(QModelIndex)), feedTree, SLOT(pressed(QModelIndex)));
 
 	//Timer for the delay of scrollbug
@@ -127,6 +129,9 @@ void XplRSS::recSaveFeedTree(QStandardItem* item, int level, QFile& file){
 		for(int k=0; k<level; k++){
 			file.write(">");
 		}
+		Feed* temp = dynamic_cast<Feed*>(item);
+		if(temp) temp->updateSaveText();
+
 		QString line = item->data(SaveRole).toString();
 		qDebug() << line;
 		file.write(c_str(line));
@@ -159,7 +164,7 @@ void XplRSS::on_actionOptions_triggered()
 
 void XplRSS::on_actionAbout_triggered()
 {
-	QMessageBox about(QMessageBox::NoIcon,"About XplRSS", "<strong>XplRSS &copy; 2013 Aramande and Hackular.com</strong>"
+	QMessageBox about(QMessageBox::NoIcon,"About XplRSS", "<h1>XplRSS v1.0</h1><strong>XplRSS &copy; 2013 Aramande and Hackular.com</strong>"
 							"<p>This software is released under the GNU GPL v2 and is free to use and modify.<br />"
 							"Any bugs are merely features that are yet to be implemented, please be patient.</p>");
 	about.setTextFormat(Qt::RichText);
@@ -187,4 +192,9 @@ void XplRSS::on_actionQuit_triggered()
 	 saveFeedTree();
 	 this->destroy();
 	 qApp->quit();
+}
+
+void XplRSS::on_actionAdd_Branch_triggered()
+{
+	 Q
 }

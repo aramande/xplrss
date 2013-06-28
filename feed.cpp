@@ -3,12 +3,12 @@
 #include "feedlistitemmodel.h"
 #include <string>
 
-Feed::Feed(const QString& url, const QString& title, const QString& readItems, QWidget *parent) : QStandardItem(){
-	_parent = dynamic_cast<XplRSS*>(parent);
+Feed::Feed(const QString& url, const QString& title, const QString& readItems, XplRSS *parent) : QStandardItem(){
+	_parent = parent;
 	feedUtil = NULL;
 
 	setData(QVariant(url), UrlRole);
-	setData(QVariant::fromValue(new FeedListItemModel(new RssModel(url, readItems.split(";"), parent))), RssRole);
+	setData(QVariant::fromValue(new FeedListItemModel(new RssModel(url, readItems.split(";").toSet(), parent))), RssRole);
 	if(title == ""){
 		feedUtil = new FeedUtil(this);
 	}
@@ -19,7 +19,7 @@ Feed::Feed(const QString& url, const QString& title, const QString& readItems, Q
 
 Feed::Feed(const Feed &other){
 	setData(other.data(UrlRole), UrlRole);
-	setData(QVariant::fromValue(data(RssRole).value<FeedListItemModel*>()->link()), RssRole);
+	setData(QVariant::fromValue(other.data(RssRole).value<FeedListItemModel*>()->link()), RssRole);
 	_parent = other.parent();
 }
 
@@ -37,11 +37,37 @@ void Feed::setText(const QString &text){
 	str.remove(",");
 	qDebug() << str << text;
 	QStandardItem::setText(str);
+	QStandardItem::setData(str, TextRole);
+	FeedListItemModel* rssData = data(RssRole).value<FeedListItemModel*>();
 
 	str.append(",");
 	str.append(data(UrlRole).toString());
 	str.append(",");
-	// TODO: write read posts ids here
+
+	QList<QString> readItems = rssData->instance()->readItems();
+
+	foreach(QString item, readItems){
+		str.append(item);
+		str.append(";");
+	}
+	setData(QVariant(str), SaveRole);
+}
+
+void Feed::updateSaveText(){
+	QString str;
+	str.append(data(TextRole).toString());
+	str.append(",");
+
+	str.append(data(UrlRole).toString());
+	str.append(",");
+
+	FeedListItemModel* rssData = data(RssRole).value<FeedListItemModel*>();
+	QList<QString> readItems = rssData->instance()->readItems();
+
+	foreach(QString item, readItems){
+		str.append(item);
+		str.append(";");
+	}
 	setData(QVariant(str), SaveRole);
 }
 
@@ -61,9 +87,9 @@ void Feed::setData(const QVariant &value, int role){
 QVariant Feed::data(int role) const{
 	QVariant res;
 	switch(role){
-		default:
-			res = QStandardItem::data(role);
-			break;
+	default:
+		res = QStandardItem::data(role);
+		break;
 	}
 	return res;
 }

@@ -26,18 +26,19 @@ class FeedUtil : public QObject
 class Feed : public QStandardItem
 {
 	public:
-		explicit Feed(const QString &url, const QString &title = "", const QString &readItems = "", QWidget *parent = 0);
+		explicit Feed(const QString &url, const QString &title = "", const QString &readItems = "", XplRSS *parent = 0);
 		explicit Feed(const Feed& other);
 		~Feed();
 		void setText(const QString &text);
 		void setData(const QVariant &value, int role);
 		QVariant data(int role) const;
+		void updateSaveText();
 	private:
-		QWidget* _parent;
+		XplRSS* _parent;
 		//RssModel* rssData;
 		FeedUtil* feedUtil;
 	public:
-		ATTR_READER(QWidget*, parent)
+		ATTR_READER(XplRSS*, parent)
 };
 
 #endif // FEED_H

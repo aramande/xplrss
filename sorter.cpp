@@ -6,6 +6,6 @@ Sorter::Sorter(QObject *parent) :
 }
 
 void Sorter::setSourceModel(QAbstractItemModel *model){
-	QSortFilterProxyModel::setSourceModel(model);
 	qDebug() << model;
+	QSortFilterProxyModel::setSourceModel(model);
 }
