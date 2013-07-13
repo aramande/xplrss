@@ -1,4 +1,6 @@
 #include "feedlistitemmodel.h"
+#include "sorter.h"
+
 
 FeedListItemModel::FeedListItemModel(Branch* branch) : QAbstractItemModel(),
 	_instance(NULL){
@@ -38,19 +40,31 @@ void FeedListItemModel::loadUrl(){
 	}
 }
 
+RssModel* FeedListItemModel::instance(const QModelIndex& index) const{
+	if(_instance)
+		return _instance;
+	if(index.isValid()){
+		return reinterpret_cast<RssModel*>(this->index(index.row(), index.column()).internalPointer());
+	}
+	return NULL;
+}
+
 QModelIndex FeedListItemModel::index(int row, int column, const QModelIndex &parent) const{
 	if(_branch){
 		int tempRow = row;
 		for(int i=0; i<_branch->rowCount() && tempRow >= 0;++i){
 			FeedListItemModel* model = _branch->child(i)->data(RssRole).value<FeedListItemModel*>();
 			if(model->rowCount() > tempRow){
-				return model->index(tempRow, column, parent);
+				//return model->index(tempRow, column, parent);
+				QModelIndex result = model->index(tempRow, column, parent);
+				result = createIndex(result.row(), result.column(), result.internalPointer());
+				return result;
 			}
 			tempRow -= model->rowCount();
 		}
 		return QModelIndex();
 	}
-	return createIndex(row,column,_instance);
+	return createIndex(row, column, _instance);
 }
 
 QModelIndex FeedListItemModel::parent(const QModelIndex &child) const{
@@ -82,7 +96,34 @@ void FeedListItemModel::feedLoaded(QStandardItemModel *model){
 	emit loaded(model);
 }
 
-void FeedListItemModel::pressed(QModelIndex &index){
-	RssModel* model = reinterpret_cast<RssModel*>(index.internalPointer());
-	model->pressed(createIndex(index.row(), index.column(), (quintptr)NULL));
+void FeedListItemModel::clicked(const QModelIndex &index){
+	const Sorter* sorter = dynamic_cast<const Sorter*>(index.model());
+	const FeedListItemModel* model = dynamic_cast<const FeedListItemModel*>(index.model());
+	if(sorter != NULL){
+		QModelIndex sortIndex = sorter->index(index.row(), index.column());
+		QModelIndex modelIndex = sorter->mapToSource(sortIndex);
+
+		FeedListItemModel* feedList = dynamic_cast<FeedListItemModel*>(sorter->sourceModel());
+		RssModel* instance = feedList->instance(modelIndex);
+		//if(!instance){
+		//	instance = reinterpret_cast<RssModel*>(feedList->index(index.row(), index.column()).internalPointer());
+		//}
+		instance->pressed(modelIndex, _mousePressed);
+	}
+	else if(model != NULL){
+		QModelIndex modelIndex = model->index(index.row(), index.column());
+
+		model->instance()->pressed(modelIndex, _mousePressed);
+	}
+	_mousePressed = QApplication::mouseButtons();
+	//QModelIndex modelIndex = this->index();
+	//QModelIndex realIndex = createIndex(modelIndex.row(), modelIndex.column(), modelIndex.internalPointer());
+	//reinterpret_cast<RssModel*>(realIndex.internalPointer())->pressed(createIndex(realIndex.row(), realIndex.column(), &realIndex));
+	//reinterpret_cast<RssModel*>(realIndex.internalPointer())->pressed(modelIndex);
+}
+
+void FeedListItemModel::pressed(const QModelIndex &index){
+	Q_UNUSED(index)
+	_mousePressed = QApplication::mouseButtons();
+
 }

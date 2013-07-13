@@ -26,7 +26,7 @@ SOURCES += main.cpp \
     feedlistview.cpp \
     sorter.cpp \
     #compoundmodelscrapped.cpp
-    mergedmodel.cpp \
+    #mergedmodel.cpp \
     feedlistitemmodel.cpp
 
 HEADERS  += xplrss.h \
@@ -43,7 +43,7 @@ HEADERS  += xplrss.h \
     sorter.h \
     feedlistitemmodel.h \
     #compoundmodelscrapped.h
-    mergedmodel.h
+    #mergedmodel.h
 
 FORMS += xplrss.ui
 

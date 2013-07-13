@@ -13,10 +13,11 @@
 
 //RssModel::RssModel(QObject *parent) : QStandardItemModel(parent){}
 
-RssModel::RssModel(const QString &url, QStringList readItems, QWidget *parent) : QStandardItemModel(){
+RssModel::RssModel(const QString &url, QSet<QString> readItems, XplRSS *parent) : QStandardItemModel(){
 	QUrl temp(url);
-	_parent = dynamic_cast<XplRSS*>(parent);
+	_parent = parent;
 	_filename = QString("%1/.xplrss/cache/%2%3.xml").arg(QDir::homePath(), temp.host(), temp.path().split(QRegExp("[^a-z0-9]")).join(""));
+	_readItems = readItems;
 	_rssLink = url;
 	qRegisterMetaTypeStreamOperators<RssModel*>("RssModel*");
 	loadFile();
@@ -25,19 +26,26 @@ RssModel::RssModel(const QString &url, QStringList readItems, QWidget *parent) :
 	_ref = 1;
 }
 
-RssModel::RssModel(QWidget *parent) : QStandardItemModel(parent){
+RssModel::RssModel(XplRSS *parent) : QStandardItemModel(){
+	_parent = parent;
 	_ref = 1;
 	_selectedItem = NULL;
+	qRegisterMetaTypeStreamOperators<RssModel*>("RssModel*");
 }
 
-RssModel::RssModel(const RssModel& original) : QStandardItemModel(original.parent()){
+RssModel::RssModel(const RssModel& original) : QStandardItemModel(){
+	_parent = original._parent;
 	_rssLink = original.rssLink();
-	_readItems = QLinkedList<QString>(original._readItems);
+	_readItems = QSet<QString>(original._readItems);
 	QUrl temp(_rssLink);
 	_filename = QString("%1/.xplrss/cache/%2%3.xml").arg(QDir::homePath(), temp.host(), temp.path().split(QRegExp("[^a-z0-9]")).join(""));
 	loadUrl(_rssLink);
 	_selectedItem = NULL;
 	_ref = 1;
+}
+
+QList<QString> RssModel::readItems() const{
+	return _readItems.toList();
 }
 
 RssModel::~RssModel(){
@@ -156,27 +164,41 @@ void RssModel::loadFile(){
 void RssModel::markRead(const QModelIndex &index){
 	QStandardItemModel* model = dynamic_cast<QStandardItemModel*>(_parent->feedListView()->model());
 	RssItem* item = static_cast<RssItem*>(model->takeItem(index.row()));
-	item->setRead(true);
+	markRead(item);
 }
 
-void RssModel::pressed(const QModelIndex &index){
+void RssModel::markRead(RssItem* item, bool value){
+	item->setRead(value);
+	QByteArray source = QByteArray(c_str(item->id()));
+	QString result = QString::number(qChecksum(source.data(), source.length()));
+	_readItems.insert(result);
+}
+
+void RssModel::pressed(const QModelIndex &index, Qt::MouseButtons button){
 	if(!index.isValid()) return;
-	auto mouse = QApplication::mouseButtons();
-	auto model = dynamic_cast<QSortFilterProxyModel*>(_parent->feedListView()->model());
-	auto item = static_cast<RssItem*>(dynamic_cast<QStandardItemModel*>(model->sourceModel())->itemFromIndex(model->mapToSource(index)));
-	if(item && mouse & Qt::LeftButton){
-		if(_selectedItem != NULL){
+	FeedListView *temp = _parent->feedListView();
+
+	auto model = dynamic_cast<QSortFilterProxyModel*>(temp->model());
+	FeedListItemModel* feedListModel = dynamic_cast<FeedListItemModel*>(model->sourceModel());
+	RssItem* item = dynamic_cast<RssItem*>(feedListModel->instance(index)->item(index.row(), index.column()));
+	if(item && button & Qt::LeftButton){
+		if(_selectedItem == item){
+				QDesktopServices service;
+				service.openUrl(item->itemLink());
+		}
+		else if(_selectedItem != NULL){
 			_selectedItem->setHidden(true);
 			_selectedItem->setExpanded(false);
 			_selectedItem->setText();
 		}
-		item->setRead(true);
+		markRead(item);
 		item->setExpanded(true);
 		item->setHidden(false);
 		item->setText();
+		//feedListModel->dataChanged(index, index, QVector<int>(1, Qt::DisplayRole));
 		_selectedItem = item;
 	}
-	qDebug() << index << mouse;
+	qDebug() << index << feedListModel->mousePressed();
 }
 
 void RssModel::requestFinished(QNetworkReply *reply){
@@ -186,9 +208,28 @@ void RssModel::requestFinished(QNetworkReply *reply){
 	}
 	xml.addData(reply->readAll());
 	parseXml();
+	markPrevRead();
 	emit(loaded(this));
 	saveFile();
 	xml.clear();
+}
+
+void RssModel::markPrevRead(){
+	QSet<QString> readItems = QSet<QString>(_readItems);
+	_readItems.clear();
+	for(int row=0;row<rowCount();++row){
+		RssItem* rssitem = dynamic_cast<RssItem*>(item(row));
+		QByteArray source = QByteArray(c_str(rssitem->id()));
+		QString result = QString::number(qChecksum(source.data(), source.length()));
+		if(readItems.contains(result)){
+			rssitem->setRead(true);
+			rssitem->setHidden(true);
+			rssitem->setExpanded(false);
+			rssitem->setText();
+			_readItems.insert(result);
+			//feedListModel->dataChanged(rssitem->index(), rssitem->index(), QVector<int>(1, Qt::DisplayRole));
+		}
+	}
 }
 
 void RssModel::parseXml(){

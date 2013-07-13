@@ -38,7 +38,7 @@ public:
 private:
 	Ui::XplRSS *ui;
 	FeedTreeView *feedTreeView;
-	QListView *_feedListView;
+	FeedListView *_feedListView;
 	QSortFilterProxyModel *_sorter;
 	FeedTree *feedTree;
 	FeedListItemModel *feedList;
@@ -50,7 +50,7 @@ private:
 	void recSaveFeedTree(QStandardItem *item, int level, QFile &file);
 	void closeEvent(QCloseEvent *event);
 public:
-	ATTR_READER(QListView*, feedListView)
+	ATTR_READER(FeedListView*, feedListView)
 	ATTR_READER(QSortFilterProxyModel*, sorter)
 public slots:
 	void delay();
