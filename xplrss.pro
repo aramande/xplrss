@@ -13,7 +13,7 @@ TEMPLATE = app
 QMAKE_CXXFLAGS += -std=c++0x
 
 SOURCES += main.cpp \
-        xplrss.cpp \
+    xplrss.cpp \
     feedtree.cpp \
     htmldelegate.cpp \
     rssmodel.cpp \
@@ -25,8 +25,6 @@ SOURCES += main.cpp \
     feedtreeview.cpp \
     feedlistview.cpp \
     sorter.cpp \
-    #compoundmodelscrapped.cpp
-    #mergedmodel.cpp \
     feedlistitemmodel.cpp
 
 HEADERS  += xplrss.h \
@@ -41,12 +39,14 @@ HEADERS  += xplrss.h \
     feedtreeview.h \
     feedlistview.h \
     sorter.h \
-    feedlistitemmodel.h \
-    #compoundmodelscrapped.h
-    #mergedmodel.h
+    feedlistitemmodel.h
 
 FORMS += xplrss.ui
 
 OTHER_FILES += \
     tree.txt \
     README.md
+
+RESOURCES += \
+    icons.qrc
+

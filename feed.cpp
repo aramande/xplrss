@@ -5,12 +5,14 @@
 
 Feed::Feed(const QString& url, const QString& title, const QString& readItems, XplRSS *parent) : QStandardItem(){
 	_parent = parent;
-	feedUtil = NULL;
 
 	setData(QVariant(url), UrlRole);
-	setData(QVariant::fromValue(new FeedListItemModel(new RssModel(url, readItems.split(";").toSet(), parent))), RssRole);
+	//setData(QVariant::fromValue(new FeedListItemModel(new RssModel(url, readItems.split(";").toSet(), parent))), RssRole);
+	setData(QVariant::fromValue(new RssModel(url, readItems.split(";").toSet(), parent)), RssRole);
+	feedUtil = new FeedUtil(this);
+
 	if(title == ""){
-		feedUtil = new FeedUtil(this);
+		feedUtil->setText();
 	}
 	else{
 		setText(title);
@@ -19,13 +21,19 @@ Feed::Feed(const QString& url, const QString& title, const QString& readItems, X
 
 Feed::Feed(const Feed &other){
 	setData(other.data(UrlRole), UrlRole);
-	setData(QVariant::fromValue(other.data(RssRole).value<FeedListItemModel*>()->link()), RssRole);
+	//setData(QVariant::fromValue(other.data(RssRole).value<RssModel*>()->link()), RssRole);
+	RssModel* model = other.data(RssRole).value<RssModel*>();
+	setData(QVariant::fromValue(model), RssRole);
+	model->addRef();
+	setText(other.data(TextRole).toString());
+	feedUtil = new FeedUtil(this);
 	_parent = other.parent();
 }
 
 Feed::~Feed(){
-	FeedListItemModel* rssData = data(RssRole).value<FeedListItemModel*>();
-	delete rssData;
+	RssModel* rssData = data(RssRole).value<RssModel*>();
+	rssData->delRef();
+	if(rssData->ref() == 0)	delete rssData;
 
 	if(feedUtil) delete feedUtil;
 	feedUtil = NULL;
@@ -38,13 +46,13 @@ void Feed::setText(const QString &text){
 	qDebug() << str << text;
 	QStandardItem::setText(str);
 	QStandardItem::setData(str, TextRole);
-	FeedListItemModel* rssData = data(RssRole).value<FeedListItemModel*>();
+	RssModel* rssData = data(RssRole).value<RssModel*>();
 
 	str.append(",");
 	str.append(data(UrlRole).toString());
 	str.append(",");
 
-	QList<QString> readItems = rssData->instance()->readItems();
+	QList<QString> readItems = rssData->readItems();
 
 	foreach(QString item, readItems){
 		str.append(item);
@@ -61,13 +69,14 @@ void Feed::updateSaveText(){
 	str.append(data(UrlRole).toString());
 	str.append(",");
 
-	FeedListItemModel* rssData = data(RssRole).value<FeedListItemModel*>();
-	QList<QString> readItems = rssData->instance()->readItems();
+	RssModel* rssData = data(RssRole).value<RssModel*>();
+	QList<QString> readItems = rssData->readItems();
 
 	foreach(QString item, readItems){
 		str.append(item);
 		str.append(";");
 	}
+	if(readItems.length() > 0) str.truncate(str.length()-1);
 	setData(QVariant(str), SaveRole);
 }
 
@@ -94,14 +103,44 @@ QVariant Feed::data(int role) const{
 	return res;
 }
 
+void Feed::loadUrl(){
+	feedUtil->loadUrl();
+}
+
+
+
 FeedUtil::FeedUtil(Feed* feed){
+	setFeed(feed);
+}
+
+void FeedUtil::setFeed(Feed* feed){
 	_feed = feed;
+}
+
+void FeedUtil::loadUrl(){
+	_feed->setData(QVariant(QIcon(":32/loading")),Qt::DecorationRole);
+	RssModel* model = _feed->data(RssRole).value<RssModel*>();
+	connect(model, SIGNAL(loaded(QStandardItemModel*)), this, SLOT(finishedLoading()));
+	qDebug() << "LOADING URL";
+	model->loadUrl();
+}
+
+void FeedUtil::setText(){
 	QVariant qv = _feed->data(RssRole);
-	if(qv.canConvert<FeedListItemModel*>())
-		connect(qv.value<FeedListItemModel*>(), SIGNAL(parsed(QString)), this, SLOT(setTitle(QString)));
+	if(qv.canConvert<RssModel*>())
+		connect(qv.value<RssModel*>(), SIGNAL(parsed(QString)), this, SLOT(setTitle(QString)));
+}
+
+void FeedUtil::finishedLoading(){
+	qDebug() << "FINISHED LOADING URL";
+	_feed->setData(QVariant(),Qt::DecorationRole);
+	RssModel* model = _feed->data(RssRole).value<RssModel*>();
+	disconnect(model, SIGNAL(loaded(QStandardItemModel*)), this, SLOT(finishedLoading()));
 }
 
 void FeedUtil::setTitle(QString title){
 	_feed->setText(title);
 	dynamic_cast<XplRSS*>(_feed->parent())->saveFeedTree();
+	QVariant qv = _feed->data(RssRole);
+	disconnect(qv.value<RssModel*>(), SIGNAL(parsed(QString)), this, SLOT(setTitle(QString)));
 }

@@ -1,2 +1,12 @@
+<<<<<<< HEAD
 *autosave
 *.pro.use*
+=======
+Makefile*
+debug/
+Thumbs.db
+object_script*
+*.pro.autosave
+*.pro.use*
+*.autosave
+>>>>>>> b828d782b4fd57ae5adc124f23f89bd6196b326d

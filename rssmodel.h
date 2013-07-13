@@ -1,3 +1,4 @@
+
 #ifndef RSSMODEL_H
 #define RSSMODEL_H
 
@@ -32,7 +33,6 @@ public:
 	Iter<RssItem*> begin() const;
 	Iter<RssItem*> end() const;
 	virtual void loadUrl(const QString &urlstring = "");
-	void pressed(const QModelIndex &index, Qt::MouseButtons button);
 	QList<QString> readItems() const;
 
 private:
@@ -44,6 +44,7 @@ private:
 	QString _filename, _guid, _title, _subtitle, _rssLink, _link, _updated;
 	QSet<QString> _readItems;
 	XplRSS *_parent;
+	Qt::MouseButtons _button;
 
 	void saveFile();
 	void loadFile();
@@ -62,6 +63,8 @@ signals:
 	void parsed(QString);
 public slots:
 	void requestFinished(QNetworkReply *reply);
+	void pressed(const QModelIndex &index);
+	void clicked(const QModelIndex &index);
 };
 
 #endif // RSSMODEL_H

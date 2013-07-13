@@ -7,7 +7,7 @@
 Branch::Branch(const QString &label) : QStandardItem(label)
 {
 	setData(QVariant(label),SaveRole);
-	setData(QVariant::fromValue(new FeedListItemModel(this)), RssRole);
+	//setData(QVariant::fromValue(new FeedListItemModel(this)), RssRole);
 }
 
 Branch::Branch(const Branch &other) : QStandardItem(other.data(SaveRole).toString()){
@@ -24,9 +24,9 @@ Branch::Branch(const Branch &other) : QStandardItem(other.data(SaveRole).toStrin
 }
 
 Branch::~Branch(){
-	FeedListItemModel* rssData = data(RssRole).value<FeedListItemModel*>();
-	delete rssData;
-	data(RssRole).fromValue(NULL);
+	//FeedListItemModel* rssData = data(RssRole).value<FeedListItemModel*>();
+	//delete rssData;
+	//data(RssRole).fromValue(NULL);
 }
 
 void Branch::setText(const QString &text){
@@ -47,5 +47,19 @@ void Branch::setData(const QVariant &value, int role){
 		default:
 			QStandardItem::setData(value, role);
 			break;
+	}
+}
+
+void Branch::loadUrl(){
+	Feed* feed;
+	Branch* branch;
+	for(int i=0; i<rowCount(); ++i){
+		if((feed = dynamic_cast<Feed*>(child(i))) != NULL){
+			feed->loadUrl();
+		}
+		else{
+			branch = dynamic_cast<Branch*>(child(i));
+			branch->loadUrl();
+		}
 	}
 }

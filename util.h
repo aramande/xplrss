@@ -74,7 +74,7 @@ public:
 	Exception (const QString& message, const char* file, int line) noexcept;
 	Exception (const std::exception&) noexcept;
 	Exception& operator= (const std::exception&) noexcept;
-	~Exception ();
+	virtual ~Exception () noexcept;
 	virtual const char* what() const noexcept;
 };
 

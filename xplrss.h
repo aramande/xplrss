@@ -33,7 +33,7 @@ public:
 	~XplRSS();
 	void addToFeedTree(QStandardItem *item);
 	void saveFeedTree();
-	void loadFeed(FeedListItemModel *rssData);
+	void loadFeed(RssModel *rssData);
     
 private:
 	Ui::XplRSS *ui;
@@ -41,7 +41,7 @@ private:
 	FeedListView *_feedListView;
 	QSortFilterProxyModel *_sorter;
 	FeedTree *feedTree;
-	FeedListItemModel *feedList;
+	RssModel *feedList;
 	QWidget *addFeedWidget;
 	QTimer *timer;
 	QString _feedTreeFile;
@@ -64,7 +64,7 @@ private slots:
 	void on_actionRead_Ascending_triggered();
 	void on_actionRead_Descending_triggered();
 	void on_actionQuit_triggered();
+	void on_actionReload_triggered();
 };
 
 #endif // XPLRSS_H
-

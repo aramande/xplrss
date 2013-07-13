@@ -45,7 +45,6 @@ void FeedTreeView::dropEvent(QDropEvent *event){
 			}
 			else{
 				target->appendRow(new Branch(*dynamic_cast<Branch*>(source)));
-
 			}
 			event->accept();
 			qDebug() << "Moving" << source->data(SaveRole).toString() << "to" << target->data(SaveRole).toString();
