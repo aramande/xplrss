@@ -20,8 +20,8 @@ RssModel::RssModel(const QString &url, QSet<QString> readItems, XplRSS *parent) 
 	_readItems = readItems;
 	_rssLink = url;
 	qRegisterMetaTypeStreamOperators<RssModel*>("RssModel*");
-	loadFile();
-	loadUrl(url);
+	//loadFile();
+	//loadUrl(url);
 	_selectedItem = NULL;
 	_ref = 1;
 }
@@ -39,7 +39,7 @@ RssModel::RssModel(const RssModel& original) : QStandardItemModel(){
 	_readItems = QSet<QString>(original._readItems);
 	QUrl temp(_rssLink);
 	_filename = QString("%1/.xplrss/cache/%2%3.xml").arg(QDir::homePath(), temp.host(), temp.path().split(QRegExp("[^a-z0-9]")).join(""));
-	loadUrl(_rssLink);
+	//loadUrl(_rssLink);
 	_selectedItem = NULL;
 	_ref = 1;
 }
@@ -109,9 +109,9 @@ void RssModel::saveFile(){
 				out.writeTextElement("id", _link);
 
 			out.writeTextElement("updated", _updated); //TODO: be formatted
-
-			qDebug() << "I have " << rowCount() << " rows.";
-			for(int i; i<rowCount(); ++i){
+			int rows = rowCount();
+			qDebug() << "I have " << rows << " rows.";
+			for(int i=0; i<rows; ++i){
 				RssItem *it = static_cast<RssItem*>(item(i));
 				out.writeStartElement("entry");
 
@@ -155,10 +155,11 @@ void RssModel::loadFile(){
 	QFile file(_filename);
 	if(file.open(QFile::ReadOnly | QFile::Text)){
 		xml.addData(file.readAll());
-		parseXml();
 		file.close();
-		xml.clear();
 	}
+
+	parseXml();
+	xml.clear();
 }
 
 void RssModel::markRead(const QModelIndex &index){
@@ -174,31 +175,37 @@ void RssModel::markRead(RssItem* item, bool value){
 	_readItems.insert(result);
 }
 
-void RssModel::pressed(const QModelIndex &index, Qt::MouseButtons button){
+void RssModel::pressed(const QModelIndex &index){
+	_button = QApplication::mouseButtons();
+}
+
+void RssModel::clicked(const QModelIndex &index){
 	if(!index.isValid()) return;
 	FeedListView *temp = _parent->feedListView();
 
 	auto model = dynamic_cast<QSortFilterProxyModel*>(temp->model());
-	FeedListItemModel* feedListModel = dynamic_cast<FeedListItemModel*>(model->sourceModel());
-	RssItem* item = dynamic_cast<RssItem*>(feedListModel->instance(index)->item(index.row(), index.column()));
-	if(item && button & Qt::LeftButton){
-		if(_selectedItem == item){
+	QModelIndex sortIndex = model->mapToSource(index);
+	//FeedListItemModel* feedListModel = dynamic_cast<FeedListItemModel*>(model->sourceModel());
+	RssItem* tItem = dynamic_cast<RssItem*>(item(sortIndex.row(), sortIndex.column()));
+
+	if(tItem && _button & Qt::LeftButton){
+		if(_selectedItem == tItem){
 				QDesktopServices service;
-				service.openUrl(item->itemLink());
+				service.openUrl(tItem->itemLink());
 		}
 		else if(_selectedItem != NULL){
 			_selectedItem->setHidden(true);
 			_selectedItem->setExpanded(false);
 			_selectedItem->setText();
 		}
-		markRead(item);
-		item->setExpanded(true);
-		item->setHidden(false);
-		item->setText();
+		markRead(tItem);
+		tItem->setExpanded(true);
+		tItem->setHidden(false);
+		tItem->setText();
 		//feedListModel->dataChanged(index, index, QVector<int>(1, Qt::DisplayRole));
-		_selectedItem = item;
+		_selectedItem = tItem;
 	}
-	qDebug() << index << feedListModel->mousePressed();
+	qDebug() << index << _button;
 }
 
 void RssModel::requestFinished(QNetworkReply *reply){
@@ -208,7 +215,9 @@ void RssModel::requestFinished(QNetworkReply *reply){
 	}
 	xml.addData(reply->readAll());
 	parseXml();
+	//qDebug() << "Bah?";
 	markPrevRead();
+	qDebug() << "Loaded" << _title;
 	emit(loaded(this));
 	saveFile();
 	xml.clear();
@@ -309,8 +318,8 @@ void RssModel::parseRss2(){
 				int res = filter(id, timestamp);
 				if(res){
 					if(res != 1) removeRow(res-2);
-					qDebug() << QString::number(hash(c_str(id)), 16);
 					appendRow(new RssItem(title, timestamp, content, "", "", link, false, id));
+					qDebug() << QString::number(hash(c_str(id)), 16) << rowCount();
 				}
 
 				title.clear();
@@ -351,6 +360,7 @@ void RssModel::parseAtom(){
 
 	while (!xml.atEnd()) {
 		xml.readNext();
+		//qDebug() << "what the hell?" << xml.name();
 		if (xml.isStartElement()) {
 			if(xml.name() == "entry"){
 				if (title!="" && _title == "" && _link == ""){
@@ -366,6 +376,7 @@ void RssModel::parseAtom(){
 				id.clear();
 			 }
 			currentTag = xml.name().toString();
+			//qDebug() << "tag started" << currentTag;
 			if (currentTag == "link"){
 				if (xml.attributes().hasAttribute("rel") && xml.attributes().value("rel") == "self")
 					link += xml.text().toString();
@@ -373,16 +384,22 @@ void RssModel::parseAtom(){
 					link += xml.attributes().value("href");
 			 }
 		} else if (xml.isEndElement()) {
+			//qDebug() << "I should get here?" << link;
 			if (xml.name() == "entry" && link != "") {
 				QDateTime timestamp = QDateTime::fromString(date, "yyyy-MM-ddThh:mm:ssZ");
+				//qDebug() << timestamp;
 				if(timestamp.toString() == "") timestamp = QDateTime::fromString(date, "yyyy-MM-ddThh:mm:ss.zzzZ");
+				//qDebug() << "Test" << id << timestamp;
 				int res = filter(id, timestamp);
+				//qDebug() << "Stuff" << title << res;
 				if(res){
 					if(res != 1) removeRow(res-2);
 					bool read = false;
 					if(_readItems.contains(QString::number(hash(c_str(id)), 16)))
 						read = true;
+					//qDebug() << "hello";
 					appendRow(new RssItem(title, timestamp, content, summary, author, link, read, id));
+					//qDebug() << "Appended here";
 				}
 
 				content.clear();
@@ -395,8 +412,11 @@ void RssModel::parseAtom(){
 			}
 
 		} else if (xml.isCharacters() && !xml.isWhitespace()) {
-			 if (currentTag == "title")
+			//qDebug() << "bug here?";
+			 if (currentTag == "title"){
 				  title += xml.text().toString();
+				  //qDebug() << "new entry" << title;
+			 }
 			 else if (currentTag == "updated")
 				  date += xml.text().toString();
 			 else if (currentTag == "id")
@@ -405,10 +425,13 @@ void RssModel::parseAtom(){
 				  content += xml.text().toString();
 			 else if (currentTag == "summary")
 				 summary += xml.text().toString();
-			 else if (currentTag == "name")
+			 else if (currentTag == "name"){
 				 author += xml.text().toString();
+				 //qDebug() << author;
+			 }
 		}
 	}
+
 	if (xml.error() && xml.error() != QXmlStreamReader::PrematureEndOfDocumentError) {
 		qWarning() << "XML ERROR:" << xml.lineNumber() << ": " << xml.errorString();
 		http.deleteLater();

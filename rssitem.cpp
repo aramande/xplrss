@@ -4,13 +4,18 @@
 #include <QDebug>
 RssItem::RssItem(const QString &title, const QDateTime &date, const QString &content, const QString &summary, const QString &author, const QString &itemLink, bool read, const QString &id) : QStandardItem()
 {
+	qDebug() << "Creating" << title;
 	setData(QVariant(read), ReadRole);
 	_hidden = read;
 	_expanded = false;
 	_id = id;
-	setData(QVariant(date), DateRole);
+	qDebug() << "Hm1?";
+	//setData(QVariant(date), DateRole);
+	qDebug() << "Hm2?";
 	this->setBackground(QBrush(QColor(Qt::white)));
+	qDebug() << "Hm3?";
 	setText(title,date,content,summary,author,itemLink);
+	qDebug() << "Hm4?";
 }
 
 void RssItem::setRead(bool value){
@@ -25,7 +30,7 @@ void RssItem::setExpanded(bool value){
 
 void RssItem::setText(const QString &title, const QDateTime &date, const QString &content, const QString &summary, const QString &author, const QString itemLink){
 	_title = title;
-	setData(date, DateRole);
+	setData(QVariant(date), DateRole);
 	_content = content;
 	_itemLink = itemLink;
 

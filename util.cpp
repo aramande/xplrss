@@ -27,7 +27,8 @@ qulonglong hash(const char *str, unsigned long long salt){
 
 const char* c_str(QString str1){
 	QByteArray ba = str1.toLatin1();
-	const char* c_str2 = ba.data();
+	char* c_str2 = new char[ba.length()];
+	strcpy(c_str2,ba.data());
 	return c_str2;
 }
 
@@ -48,7 +49,7 @@ Exception& Exception::operator= (const std::exception& other) noexcept{
 	_message = other.what();
 	return *this;
 }
-Exception::~Exception (){}
+Exception::~Exception () noexcept{}
 
 const char* Exception::what() const noexcept{
 	return _message;

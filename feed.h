@@ -15,10 +15,14 @@ class FeedUtil : public QObject
 	Q_OBJECT
 	public:
 		explicit FeedUtil(Feed *feed);
+		void setFeed(Feed *feed);
+		void loadUrl();
+		void setText();
 	private:
 		Feed *_feed;
 	public slots:
 		void setTitle(QString title);
+		void finishedLoading();
 	signals:
 
 };
@@ -33,6 +37,7 @@ class Feed : public QStandardItem
 		void setData(const QVariant &value, int role);
 		QVariant data(int role) const;
 		void updateSaveText();
+		void loadUrl();
 	private:
 		XplRSS* _parent;
 		//RssModel* rssData;

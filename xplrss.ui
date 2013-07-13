@@ -30,7 +30,7 @@
      <x>0</x>
      <y>0</y>
      <width>600</width>
-     <height>25</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuTools">
@@ -41,12 +41,14 @@
      <property name="title">
       <string>Sort</string>
      </property>
-     <addaction name="actionDate_Ascending"/>
      <addaction name="actionDate_Descending"/>
-     <addaction name="actionRead_Ascending"/>
+     <addaction name="actionDate_Ascending"/>
      <addaction name="actionRead_Descending"/>
+     <addaction name="actionRead_Ascending"/>
     </widget>
     <addaction name="actionAdd_Feed"/>
+    <addaction name="actionAdd_Branch"/>
+    <addaction name="actionReload"/>
     <addaction name="actionOptions"/>
     <addaction name="menuSort_Date"/>
     <addaction name="actionQuit"/>
@@ -67,14 +69,28 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionAdd_Feed"/>
+   <addaction name="actionAdd_Branch"/>
+   <addaction name="separator"/>
+   <addaction name="actionReload"/>
+   <addaction name="actionOptions"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOptions">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/32/settings</normaloff>:/32/settings</iconset>
+   </property>
    <property name="text">
     <string>Options</string>
    </property>
   </action>
   <action name="actionAdd_Feed">
+   <property name="icon">
+    <iconset>
+     <normalon>:/32/add</normalon>
+    </iconset>
+   </property>
    <property name="text">
     <string>Add Feed</string>
    </property>
@@ -121,8 +137,30 @@
     <string>Quit</string>
    </property>
   </action>
+  <action name="actionAdd_Branch">
+   <property name="icon">
+    <iconset>
+     <normalon>:/32/branch</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Add Branch</string>
+   </property>
+  </action>
+  <action name="actionReload">
+   <property name="icon">
+    <iconset>
+     <normalon>:/32/refresh</normalon>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Reload</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

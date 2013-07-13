@@ -68,15 +68,18 @@ QModelIndex FeedListItemModel::index(int row, int column, const QModelIndex &par
 }
 
 QModelIndex FeedListItemModel::parent(const QModelIndex &child) const{
+	Q_UNUSED(child)
 	return QModelIndex();
 }
 
 int FeedListItemModel::rowCount(const QModelIndex &parent) const{
+	Q_UNUSED(parent)
 	if(_rowCount >= 0) return _rowCount; //saves a bit on calculations, set _rowCount to negative to recount.
 	else return 0;
 }
 
 int FeedListItemModel::columnCount(const QModelIndex &parent) const{
+	Q_UNUSED(parent)
 	return 1;
 }
 
@@ -87,6 +90,8 @@ QVariant FeedListItemModel::data(const QModelIndex &index, int role) const{
 }
 
 QMap<int, QVariant> FeedListItemModel::itemData(const QModelIndex &index) const{
+	Q_UNUSED(index)
+	qDebug() << "Does item data even do anything?";
 	QMap<int, QVariant> data;
 
 	return data;
@@ -97,7 +102,7 @@ void FeedListItemModel::feedLoaded(QStandardItemModel *model){
 }
 
 void FeedListItemModel::clicked(const QModelIndex &index){
-	const Sorter* sorter = dynamic_cast<const Sorter*>(index.model());
+	/*const Sorter* sorter = dynamic_cast<const Sorter*>(index.model());
 	const FeedListItemModel* model = dynamic_cast<const FeedListItemModel*>(index.model());
 	if(sorter != NULL){
 		QModelIndex sortIndex = sorter->index(index.row(), index.column());
@@ -115,7 +120,7 @@ void FeedListItemModel::clicked(const QModelIndex &index){
 
 		model->instance()->pressed(modelIndex, _mousePressed);
 	}
-	_mousePressed = QApplication::mouseButtons();
+	_mousePressed = QApplication::mouseButtons();*/
 	//QModelIndex modelIndex = this->index();
 	//QModelIndex realIndex = createIndex(modelIndex.row(), modelIndex.column(), modelIndex.internalPointer());
 	//reinterpret_cast<RssModel*>(realIndex.internalPointer())->pressed(createIndex(realIndex.row(), realIndex.column(), &realIndex));

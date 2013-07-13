@@ -31,7 +31,8 @@ XplRSS::XplRSS(QWidget *parent) :
 	else{
 		feedTree = new FeedTree(this);
 	}
-	feedList = new FeedListItemModel(new RssModel("http://davidr64.tumblr.com/rss", QSet<QString>(), this)); // TODO: make dynamic later
+	qDebug() << "debug";
+	feedList = new RssModel("http://davidr64.tumblr.com/rss", QSet<QString>(), this); // TODO: make dynamic later
 	//feedList = new FeedListItemModel();
 	HTMLDelegate* delegate = new HTMLDelegate(_feedListView);
 	QString css = "QListView { background: darkblue; }";
@@ -51,11 +52,6 @@ XplRSS::XplRSS(QWidget *parent) :
 	_feedListView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	_feedListView->setSelectionMode(QAbstractItemView::NoSelection);
 	setStyleSheet(css);
-
-
-	for(int i=0; i<feedTree->rowCount(); ++i){
-		feedTree->item(i)->data(RssRole).value<FeedListItemModel*>()->loadUrl();
-	}
 
 	//Mouselistener connectors
 	connect(_feedListView, SIGNAL(pressed(QModelIndex)), feedList, SLOT(pressed(QModelIndex)));
@@ -109,7 +105,7 @@ void XplRSS::addToFeedTree(QStandardItem* item){
 }
 
 void XplRSS::saveFeedTree(){
-	// TODO: Call this when stuff has been moved
+	// NOTE: Is called when exiting program and adding feeds, but not when moving things around.
 	QFile file(_feedTreeFile);
 	QDir dir;
 	if(!dir.exists(QDir::homePath() + "/.xplrss")){
@@ -126,26 +122,30 @@ void XplRSS::saveFeedTree(){
 }
 
 void XplRSS::recSaveFeedTree(QStandardItem* item, int level, QFile& file){
-		for(int k=0; k<level; k++){
-			file.write(">");
-		}
-		Feed* temp = dynamic_cast<Feed*>(item);
-		if(temp) temp->updateSaveText();
+	for(int k=0; k<level; k++){
+		file.write(">");
+	}
+	Feed* temp = dynamic_cast<Feed*>(item);
+	if(temp) temp->updateSaveText();
 
-		QString line = item->data(SaveRole).toString();
-		qDebug() << line;
-		file.write(c_str(line));
-		file.write("\n");
+	QString line = item->data(SaveRole).toString();
+	qDebug() << line;
+	file.write(c_str(line));
+	file.write("\n");
 
-		if(item->hasChildren()){
-			for(int i=0; i<item->rowCount(); i++){
-				recSaveFeedTree(item->child(i), level+1, file);
-			}
+	if(item->hasChildren()){
+		for(int i=0; i<item->rowCount(); i++){
+			recSaveFeedTree(item->child(i), level+1, file);
 		}
+	}
 }
 
-void XplRSS::loadFeed(FeedListItemModel *rssData){
+void XplRSS::loadFeed(RssModel *rssData){
+	disconnect(_feedListView, SIGNAL(pressed(QModelIndex)), feedList, SLOT(pressed(QModelIndex)));
+	disconnect(_feedListView, SIGNAL(clicked(QModelIndex)), feedList, SLOT(clicked(QModelIndex)));
 	feedList = rssData;
+	connect(_feedListView, SIGNAL(pressed(QModelIndex)), feedList, SLOT(pressed(QModelIndex)));
+	connect(_feedListView, SIGNAL(clicked(QModelIndex)), feedList, SLOT(clicked(QModelIndex)));
 	//_feedListView->setModel(rssData);
 	_sorter->setSourceModel(rssData);
 	_feedListView->scrollToTop();
@@ -194,7 +194,20 @@ void XplRSS::on_actionQuit_triggered()
 	 qApp->quit();
 }
 
-void XplRSS::on_actionAdd_Branch_triggered()
+void XplRSS::on_actionReload_triggered()
 {
-	 Q
+	for(int i=0; i<feedTree->rowCount(); ++i){
+		QStandardItem* tItem = feedTree->item(i);
+		Feed* tFeed;
+		Branch* tBranch;
+		if((tFeed = dynamic_cast<Feed*>(tItem)) != NULL){
+			tFeed->loadUrl();
+		}
+		else if((tBranch = dynamic_cast<Branch*>(tItem)) != NULL){
+			tBranch->loadUrl();
+		}
+		else{
+			THROW("Could not parse FeedTreeItem without FeedList as Branch, fatal error.")
+		}
+	}
 }

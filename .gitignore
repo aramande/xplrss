@@ -1,3 +1,7 @@
+Makefile*
+debug/
+Thumbs.db
+object_script*
 *.pro.autosave
 *.pro.use*
 *.autosave

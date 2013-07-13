@@ -74,9 +74,9 @@ void FeedTree::pressed(QModelIndex index){
 	Qt::MouseButtons mouse = QApplication::mouseButtons(); // TODO: account for which button is used
 	QStandardItem* item = itemFromIndex(index);
 	if(item->data(RssRole).isValid()){
-		if(item->data(RssRole).canConvert<FeedListItemModel*>()){ // If has feed
+		if(item->data(RssRole).canConvert<RssModel*>()){ // If has feed
 			qDebug() << "RssModel here";
-			_parent->loadFeed(item->data(RssRole).value<FeedListItemModel*>());
+			_parent->loadFeed(item->data(RssRole).value<RssModel*>());
 		}
 	}
 }

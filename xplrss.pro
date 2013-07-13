@@ -41,7 +41,7 @@ HEADERS  += xplrss.h \
     feedtreeview.h \
     feedlistview.h \
     sorter.h \
-    feedlistitemmodel.h \
+    feedlistitemmodel.h
     #compoundmodelscrapped.h
     #mergedmodel.h
 
@@ -50,3 +50,6 @@ FORMS += xplrss.ui
 OTHER_FILES += \
     tree.txt \
     README.md
+
+RESOURCES += \
+    icons.qrc

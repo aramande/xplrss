@@ -11,6 +11,9 @@ class Branch : public QStandardItem
 		~Branch();
 		void setText(const QString &text);
 		void setData(const QVariant &value, int role);
+
+		//Updates all underlying feeds and branches recursively.
+		void loadUrl();
 };
 
 #endif // BRANCH_H
